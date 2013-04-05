@@ -48,7 +48,7 @@ Firebug.CommandLine.Popup = Obj.extend(Firebug.Module,
     {
         Firebug.Module.showContext.apply(this, arguments);
 
-        var show = Firebug.Options.get("alwaysShowCommandLine");
+        var show = Options.get("alwaysShowCommandLine");
         if (show && !this.isVisible())
             this.toggle(context);
     },
@@ -127,7 +127,7 @@ Firebug.CommandLine.Popup = Obj.extend(Firebug.Module,
 
         var newState = !this.isVisible();
         Firebug.chrome.setGlobalAttribute("cmd_firebug_toggleCommandPopup", "checked", newState);
-        Firebug.Options.set("alwaysShowCommandLine", newState);
+        Options.set("alwaysShowCommandLine", newState);
 
         this.updateVisibility(newState);
 

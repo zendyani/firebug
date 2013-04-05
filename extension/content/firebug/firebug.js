@@ -150,7 +150,7 @@ window.Firebug =
 
         // Firebug is getting option-updates from the connection so,
         // do not register it again here (see issue 6035)
-        //Firebug.Options.addListener(this);
+        //Options.addListener(this);
 
         this.isInitialized = true;
 
@@ -454,7 +454,7 @@ window.Firebug =
      */
     registerPreference: function(name, value)
     {
-        Firebug.Options.register(name, value);
+        Options.register(name, value);
     },
 
     registerModule: function()
@@ -679,13 +679,13 @@ window.Firebug =
     getPref: function()
     {
         // TODO deprecated
-        return Options.getPref.apply(Firebug.Options, arguments);
+        return Options.getPref.apply(Options, arguments);
     },
 
     setPref: function()
     {
         // TODO deprecated
-        return Options.setPref.apply(Firebug.Options, arguments);
+        return Options.setPref.apply(Options, arguments);
     },
 
     clearPref: function()

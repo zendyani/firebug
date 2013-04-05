@@ -755,7 +755,7 @@ Firebug.ScriptPanel.prototype = Obj.extend(Firebug.SourceBoxPanel,
     {
         // Fill the panel node with a warning if needed
         var aLocation = this.getDefaultLocation();
-        var jsEnabled = Firebug.Options.getPref("javascript", "enabled");
+        var jsEnabled = Options.getPref("javascript", "enabled");
 
         if (FBTrace.DBG_PANELS)
         {
@@ -1243,7 +1243,7 @@ Firebug.ScriptPanel.prototype = Obj.extend(Firebug.SourceBoxPanel,
         if (!allSources.length)
             return [];
 
-        var filter = Firebug.Options.get("scriptsFilter");
+        var filter = Options.get("scriptsFilter");
         this.showEvents = (filter == "all" || filter == "events");
         this.showEvals = (filter == "all" || filter == "evals");
 
@@ -1383,13 +1383,13 @@ Firebug.ScriptPanel.prototype = Obj.extend(Firebug.SourceBoxPanel,
 
     optionMenu: function(label, option)
     {
-        var checked = Firebug.Options.get(option);
+        var checked = Options.get(option);
         return {
             label: label, type: "checkbox", checked: checked,
             command: function()
             {
                 var checked = this.hasAttribute("checked");
-                Firebug.Options.set(option, checked);
+                Options.set(option, checked);
             }
         };
     },
@@ -1839,7 +1839,7 @@ Firebug.ScriptPanel.WarningRep = domplate(Firebug.Rep,
 
     onEnableScript: function(event)
     {
-        Firebug.Options.setPref("javascript", "enabled", true);
+        Options.setPref("javascript", "enabled", true);
 
         Firebug.TabWatcher.reloadPageFromMemory(Firebug.currentContext);
     },

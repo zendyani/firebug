@@ -1150,7 +1150,7 @@ var FirebugChrome =
                 pos = this.framePosition || 'bottom';
         }
 
-        Firebug.Options.set("framePosition", pos);
+        Options.set("framePosition", pos);
         return pos;
     },
 
@@ -1313,7 +1313,7 @@ var FirebugChrome =
         if (!panelBar1)
             return;
 
-        var zoom = Firebug.Options.getZoomByTextSize(value);
+        var zoom = Options.getZoomByTextSize(value);
         var zoomString = (zoom * 100) + "%";
 
         // scale the aspect relative to 11pt Lucida Grande
@@ -1455,7 +1455,7 @@ var FirebugChrome =
                     if (option == "profiling")
                         checked = FBS.profiling;
                     else
-                        checked = Firebug.Options.get(option);
+                        checked = Options.get(option);
 
                     child.setAttribute("checked", checked);
                 }
@@ -1468,7 +1468,7 @@ var FirebugChrome =
         var option = menuitem.getAttribute("option");
         var checked = menuitem.getAttribute("checked") == "true";
 
-        Firebug.Options.set(option, checked);
+        Options.set(option, checked);
     },
 
     onContextShowing: function(event)
@@ -1988,7 +1988,7 @@ function onMouseScroll(event)
     if (Events.isControlAlt(event))
     {
         Events.cancelEvent(event);
-        Firebug.Options.changeTextSize(-event.detail);
+        Options.changeTextSize(-event.detail);
     }
 }
 
@@ -2075,7 +2075,7 @@ function onPanelMouseDown(event)
     else if (Events.isMiddleClick(event, true) && Events.isControlAlt(event))
     {
         Events.cancelEvent(event);
-        Firebug.Options.setTextSize(0);
+        Options.setTextSize(0);
     }
     else if (Events.isMiddleClick(event) && Firebug.getRepNode(event.target))
     {

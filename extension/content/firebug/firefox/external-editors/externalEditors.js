@@ -4,6 +4,7 @@ define([
     "firebug/lib/lib",
     "firebug/lib/object",
     "firebug/firebug",
+    "firebug/lib/options",
     "firebug/lib/locale",
     "firebug/lib/xpcom",
     "firebug/lib/url",
@@ -17,7 +18,7 @@ define([
     "firebug/trace/debug",
     "firebug/chrome/firefox"
 ],
-function(FBL, Obj, Firebug, Locale, Xpcom, Url, Str, SourceLink, Css, System, Arr, Dom,
+function(FBL, Obj, Firebug, Options, Locale, Xpcom, Url, Str, SourceLink, Css, System, Arr, Dom,
     Menu, Debug, Firefox) {
 
 // ********************************************************************************************* //
@@ -96,8 +97,8 @@ Firebug.ExternalEditors = Obj.extend(Firebug.Module,
         const editorPrefNames = ["label", "executable", "cmdline", "image"];
 
         externalEditors = [];
-        var prefDomain = Firebug.Options.getPrefDomain();
-        var list = Firebug.Options.getPref(prefDomain, prefName).split(",");
+        var prefDomain = Options.getPrefDomain();
+        var list = Options.getPref(prefDomain, prefName).split(",");
 
         for (var i=0; i<list.length; ++i)
         {
@@ -110,7 +111,7 @@ Firebug.ExternalEditors = Obj.extend(Firebug.Module,
             {
                 try
                 {
-                    item[editorPrefNames[j]] = Firebug.Options.getPref(prefDomain,
+                    item[editorPrefNames[j]] = Options.getPref(prefDomain,
                         prefName + "." + editorId + "." + editorPrefNames[j]);
                 }
                 catch(exc)

@@ -184,7 +184,7 @@ Firebug.JSONViewerModel.Preview = domplate(
         Events.cancelEvent(event);
 
         Css.toggleClass(sortLink, "sorted");
-        Firebug.Options.set("sortJsonPreview", !Options.get("sortJsonPreview"));
+        Options.set("sortJsonPreview", !Options.get("sortJsonPreview"));
 
         var preview = Dom.getAncestorByClass(sortLink, "jsonPreview");
         var body = Dom.getAncestorByClass(sortLink, "netInfoJSONText");

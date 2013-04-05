@@ -2,9 +2,10 @@
 
 define([
     "firebug/firebug",
-    "firebug/lib/events",
+    "firebug/lib/options",
+    "firebug/lib/events"
 ],
-function(Firebug, Events) {
+function(Firebug, Options, Events) {
 
 // ********************************************************************************************* //
 // Reusable code for modules that support editing
@@ -48,13 +49,13 @@ Firebug.EditorSelector =
     setCurrentEditorName: function(name)
     {
         this.currentEditorName = name;
-        Firebug.Options.set(this.getEditorOptionKey(), name);
+        Options.set(this.getEditorOptionKey(), name);
     },
 
     getCurrentEditorName: function()
     {
         if (!this.currentEditorName)
-            this.currentEditorName = Firebug.Options.get(this.getEditorOptionKey());
+            this.currentEditorName = Options.get(this.getEditorOptionKey());
 
         return this.currentEditorName;
     },

@@ -2464,7 +2464,7 @@ Firebug.Debugger = Obj.extend(Firebug.ActivableModule,
     obeyPrefs: function()
     {
         var name = "script.enableSites";
-        var value = Firebug.Options.get("script.enableSites");
+        var value = Options.get("script.enableSites");
         this.updateOption(name, value);
     },
 
@@ -2784,7 +2784,7 @@ Firebug.Debugger = Obj.extend(Firebug.ActivableModule,
     onScriptFilterMenuCommand: function(event, context)
     {
         var menu = event.target;
-        Firebug.Options.set("scriptsFilter", menu.value);
+        Options.set("scriptsFilter", menu.value);
         Firebug.Debugger.filterMenuUpdate();
     },
 
@@ -2837,7 +2837,7 @@ Firebug.Debugger = Obj.extend(Firebug.ActivableModule,
 
     filterMenuUpdate: function()
     {
-        var value = Firebug.Options.get("scriptsFilter");
+        var value = Options.get("scriptsFilter");
         this.filterButton.value = value;
         this.filterButton.label = this.menuShortLabel[value];
         this.filterButton.removeAttribute("disabled");

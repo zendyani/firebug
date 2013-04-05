@@ -4,12 +4,13 @@ define([
     "firebug/lib/object",
     "firebug/firebug",
     "firebug/chrome/firefox",
+    "firebug/lib/options",
     "firebug/lib/locale",
     "firebug/lib/domplate",
     "firebug/lib/url",
     "firebug/lib/dom",
 ],
-function(Obj, Firebug, Firefox, Locale, Domplate, Url, Dom) {
+function(Obj, Firebug, Firefox, Options, Locale, Domplate, Url, Dom) {
 
 // ************************************************************************************************
 // Constants
@@ -35,7 +36,7 @@ Firebug.PanelActivation = Obj.extend(Firebug.Module,
 
     initialize: function()
     {
-        prefs.addObserver(Firebug.Options.getPrefDomain(), this, false);
+        prefs.addObserver(Options.getPrefDomain(), this, false);
         Firebug.connection.addListener(this);
     },
 
@@ -52,7 +53,7 @@ Firebug.PanelActivation = Obj.extend(Firebug.Module,
 
     shutdown: function()
     {
-        prefs.removeObserver(Firebug.Options.getPrefDomain(), this, false);
+        prefs.removeObserver(Options.getPrefDomain(), this, false);
         Firebug.connection.removeListener(this);
     },
 
@@ -181,7 +182,7 @@ Firebug.PanelActivation = Obj.extend(Firebug.Module,
         try
         {
             var panelName = parts[2];
-            var enable = Firebug.Options.get(panelName + ".enableSites");
+            var enable = Options.get(panelName + ".enableSites");
 
             var panelType = Firebug.getPanelType(panelName, enable);
             if (panelType)
@@ -243,7 +244,7 @@ Firebug.PanelActivation = Obj.extend(Firebug.Module,
             Options.set("allPagesActivation", "none");
         }
 
-        Firebug.Options.set("allPagesActivation", Options.get("allPagesActivation"));
+        Options.set("allPagesActivation", Options.get("allPagesActivation"));
         this.updateAllPagesActivation();
     },
 

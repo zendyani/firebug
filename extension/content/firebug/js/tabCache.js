@@ -6,6 +6,7 @@ define([
     "firebug/lib/xpcom",
     "firebug/net/requestObserver",
     "firebug/net/responseObserver",
+    "firebug/lib/options",
     "firebug/lib/locale",
     "firebug/lib/events",
     "firebug/lib/url",
@@ -17,7 +18,7 @@ define([
     "firebug/trace/traceListener",
     "firebug/js/sourceCache"
 ],
-function(Obj, Firebug, Xpcom, HttpRequestObserver, HttpResponseObserver, Locale, Events,
+function(Obj, Firebug, Xpcom, HttpRequestObserver, HttpResponseObserver, Options, Locale, Events,
     Url, Http, Str, Win, JSONViewerModel, TraceModule, TraceListener) {
 
 // ********************************************************************************************* //
@@ -111,10 +112,10 @@ Firebug.TabCacheModel = Obj.extend(Firebug.ActivableModule,
             FBTrace.sysout("tabCache.initializeUI;");
 
         // Read maximum size limit for cached response from preferences.
-        responseSizeLimit = Firebug.Options.get("cache.responseLimit");
+        responseSizeLimit = Options.get("cache.responseLimit");
 
         // Read additional text MIME types from preferences.
-        var mimeTypes = Firebug.Options.get("cache.mimeTypes");
+        var mimeTypes = Options.get("cache.mimeTypes");
         if (mimeTypes)
         {
             var list = mimeTypes.split(" ");

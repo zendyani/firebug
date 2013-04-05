@@ -822,7 +822,7 @@ Firebug.Inspector = Obj.extend(Firebug.Module,
 
         quickInfoBox.boxEnabled = !quickInfoBox.boxEnabled;
 
-        Firebug.Options.set("showQuickInfoBox", quickInfoBox.boxEnabled);
+        Options.set("showQuickInfoBox", quickInfoBox.boxEnabled);
     },
 
     /**

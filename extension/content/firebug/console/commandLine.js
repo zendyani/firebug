@@ -416,7 +416,7 @@ Firebug.CommandLine = Obj.extend(Firebug.Module,
         if (expr === "")
             return;
 
-        var mozJSEnabled = Firebug.Options.getPref("javascript", "enabled");
+        var mozJSEnabled = Options.getPref("javascript", "enabled");
         if (!mozJSEnabled)
         {
             Firebug.Console.log(Locale.$STR("console.JSDisabledInFirefoxPrefs"), context, "info");
@@ -597,7 +597,7 @@ Firebug.CommandLine = Obj.extend(Firebug.Module,
     {
         var showCommandEditor = !!forceCommandEditor || !Options.get("commandEditor");
         if (showCommandEditor != Options.get("commandEditor"))
-            Firebug.Options.set("commandEditor", showCommandEditor);
+            Options.set("commandEditor", showCommandEditor);
     },
 
     checkOverflow: function(context)
@@ -610,7 +610,7 @@ Firebug.CommandLine = Obj.extend(Firebug.Module,
         {
             setTimeout(Obj.bindFixed(function()
             {
-                Firebug.Options.set("commandEditor", true);
+                Options.set("commandEditor", true);
 
                 // Switch to the Console panel, where the multiline command line
                 // is actually displayed. This should be improved see issue 5146
@@ -648,7 +648,7 @@ Firebug.CommandLine = Obj.extend(Firebug.Module,
         var completionBox = this.getCompletionBox();
 
         var options = {
-            showCompletionPopup: Firebug.Options.get("commandLineShowCompleterPopup"),
+            showCompletionPopup: Options.get("commandLineShowCompleterPopup"),
             completionPopup: Firebug.chrome.$("fbCommandLineCompletionList"),
             popupMeasurer: Firebug.chrome.$("fbCommandLineMeasurer"),
             tabWarnings: true,

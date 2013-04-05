@@ -231,7 +231,7 @@ Firebug.Search = Obj.extend(Firebug.Module,
 
     onToggleSearchOption: function(option)
     {
-        Firebug.Options.set(option, !Firebug[option]);
+        Options.set(option, !Firebug[option]);
 
         // Make sure the "Case Sensitive || Case Insensitive" label is updated.
         this.update();

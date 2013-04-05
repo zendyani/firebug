@@ -52,9 +52,9 @@ var BrowserCommands =
         $command(doc, "cmd_firebug_inspect", "Firebug.Inspector.inspectFromContextMenu(arg);", "document.popupNode");
         $command(doc, "cmd_firebug_toggleBreakOn", "if (Firebug.currentContext) Firebug.chrome.breakOnNext(Firebug.currentContext, event);");
         $command(doc, "cmd_firebug_toggleDetachFirebug", "Firebug.toggleDetachBar(false, true);");
-        $command(doc, "cmd_firebug_increaseTextSize", "Firebug.Options.changeTextSize(1);");
-        $command(doc, "cmd_firebug_decreaseTextSize", "Firebug.Options.changeTextSize(-1);");
-        $command(doc, "cmd_firebug_normalTextSize", "Firebug.Options.setTextSize(0);");
+        $command(doc, "cmd_firebug_increaseTextSize", "Options.changeTextSize(1);");
+        $command(doc, "cmd_firebug_decreaseTextSize", "Options.changeTextSize(-1);");
+        $command(doc, "cmd_firebug_normalTextSize", "Options.setTextSize(0);");
         $command(doc, "cmd_firebug_focusFirebugSearch", "if (Firebug.currentContext) Firebug.Search.onSearchCommand(document);");
         $command(doc, "cmd_firebug_customizeFBKeys", "Firebug.ShortcutsModel.customizeShortcuts();");
         $command(doc, "cmd_firebug_enablePanels", "Firebug.PanelActivation.enableAllPanels();");

@@ -4,6 +4,7 @@ define([
     "firebug/lib/object",
     "firebug/firebug",
     "firebug/lib/domplate",
+    "firebug/lib/options",
     "firebug/lib/locale",
     "firebug/lib/events",
     "firebug/lib/url",
@@ -14,7 +15,7 @@ define([
     "firebug/console/console",
     "firebug/chrome/infotip",
 ],
-function(Obj, Firebug, Domplate, Locale, Events, Url, Css, Dom, Xml, Xpath) {
+function(Obj, Firebug, Domplate, Options, Locale, Events, Url, Css, Dom, Xml, Xpath) {
 
 // ************************************************************************************************
 // Constants
@@ -82,7 +83,7 @@ Firebug.A11yModel = Obj.extend(Firebug.Module,
 
     isEnabled: function()
     {
-        return Firebug.Options.get("a11y.enable");
+        return Options.get("a11y.enable");
     },
 
     updateOption: function(name, value)
