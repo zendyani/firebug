@@ -3,6 +3,7 @@
 define([
     "firebug/lib/object",
     "firebug/firebug",
+    "firebug/lib/options",
     "firebug/lib/locale",
     "firebug/lib/events",
     "firebug/lib/url",
@@ -16,7 +17,7 @@ define([
     "firebug/net/netUtils",
     "firebug/lib/xpcom"
 ],
-function(Obj, Firebug, Locale, Events, Url, SourceLink, Http, Css, Win, Str,
+function(Obj, Firebug, Options, Locale, Events, Url, SourceLink, Http, Css, Win, Str,
     Arr, System, NetUtils, Xpcom) {
 
 // ********************************************************************************************* //
@@ -358,7 +359,7 @@ NetProgress.prototype =
             this.endLoad(file);
 
             // If there is a network error, log it into the Console panel.
-            if (Firebug.showNetworkErrors && Firebug.NetMonitor.NetRequestEntry.isError(file))
+            if (Options.get("showNetworkErrors") && Firebug.NetMonitor.NetRequestEntry.isError(file))
             {
                 Firebug.Errors.increaseCount(this.context);
                 var message = "NetworkError: " + Firebug.NetMonitor.NetRequestEntry.getStatus(file) + " - "+file.href;
@@ -944,7 +945,7 @@ NetProgress.prototype =
             // If the new request has been started within a "phaseInterval" after the
             // previous reqeust has been started, associate it with the current phase;
             // otherwise create a new phase.
-            var phaseInterval = Firebug.netPhaseInterval;
+            var phaseInterval = Options.get("netPhaseInterval");
             var lastStartTime = this.currentPhase.lastStartTime;
             if (phaseInterval > 0 && this.loaded && file.startTime - lastStartTime >= phaseInterval)
                 this.startPhase(file);

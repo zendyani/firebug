@@ -88,7 +88,7 @@ Firebug.StartButton = Obj.extend(Firebug.Module,
                 value: "(" + Locale.$STR(Firebug.getPlacement()) + ")"
             }));
 
-            if (Firebug.allPagesActivation == "on")
+            if (Options.get("allPagesActivation") == "on")
             {
                 tooltip.appendChild($label(doc, {
                     "class": "alwaysOn",
@@ -129,7 +129,7 @@ Firebug.StartButton = Obj.extend(Firebug.Module,
     showCount: function(errorCount)
     {
         var firebugButton = Firefox.getElementById("firebug-button");
-        if (errorCount && Firebug.showErrorCount)
+        if (errorCount && Options.get("showErrorCount"))
         {
             if (firebugButton)
             {

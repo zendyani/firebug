@@ -7,7 +7,7 @@ define([
     "firebug/lib/wrapper",
     "firebug/js/sourceLink",
     "firebug/lib/deprecated",
-    "firebug/lib/options",
+    "firebug/lib/options"
 ],
 function (FBTrace, Url, Locale, Wrapper, SourceLink, Deprecated, Options) {
 
@@ -705,8 +705,8 @@ var saveShowStackTrace;
  */
 StackFrame.suspendShowStackTrace = function()
 {
-    saveShowStackTrace = Firebug.showStackTrace;
-    Firebug.showStackTrace = false;
+    saveShowStackTrace = Options.get("showStackTrace");
+    Options.set("showStackTrace", false);
 };
 
 /**
@@ -716,7 +716,7 @@ StackFrame.resumeShowStackTrace = function()
 {
     if (saveShowStackTrace)
     {
-        Firebug.showStackTrace = saveShowStackTrace;
+        Options.set("showStackTrace", saveShowStackTrace);
         saveShowStackTrace = null;
     }
 };

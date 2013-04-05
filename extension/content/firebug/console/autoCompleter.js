@@ -5,6 +5,7 @@ define([
     "firebug/firebug",
     "firebug/lib/domplate",
     "firebug/lib/locale",
+    "firebug/lib/options",
     "firebug/lib/events",
     "firebug/lib/wrapper",
     "firebug/lib/dom",
@@ -13,7 +14,8 @@ define([
     "firebug/console/closureInspector",
     "firebug/editor/editor"
 ],
-function(Obj, Firebug, Domplate, Locale, Events, Wrapper, Dom, Str, Arr, ClosureInspector, Editor) {
+function(Obj, Firebug, Domplate, Locale, Options, Events, Wrapper, Dom, Str, Arr,
+    ClosureInspector, Editor) {
 
 // ********************************************************************************************* //
 // Constants
@@ -815,7 +817,7 @@ Firebug.JSAutoCompleter = function(textBox, completionBox, options)
 
     this.getCharWidth = function(text)
     {
-        var size = Firebug.textSize;
+        var size = Options.get("textSize");
         if (!measureCache[size])
         {
             var measurer = this.options.popupMeasurer;

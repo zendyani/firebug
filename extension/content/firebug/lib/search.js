@@ -2,7 +2,7 @@
 
 define([
     "firebug/lib/trace",
-    "firebug/lib/options",
+    "firebug/lib/options"
 ],
 function(FBTrace, Options) {
 
@@ -296,12 +296,12 @@ Search.ReversibleRegExp = function(regex, flags)
     {
         // Ensure we have a regex
         var key = (reverse ? "r" : "n") + (caseSensitive ? "n" : "i") 
-                                + (Firebug.searchUseRegularExpression ? "r" : "n");
+                                + (Options.get("searchUseRegularExpression") ? "r" : "n");
         if (!re[key])
         {
             try
             {
-                if (Firebug.searchUseRegularExpression)
+                if (Options.get("searchUseRegularExpression"))
                     re[key] = new RegExp(expression(regex, reverse), flag(flags, caseSensitive));
                 else
                     re[key] = new Search.LiteralRegExp(regex, reverse, caseSensitive);

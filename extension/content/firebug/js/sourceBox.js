@@ -4,13 +4,14 @@ define([
     "firebug/lib/object",
     "firebug/firebug",
     "arch/compilationunit",
+    "firebug/lib/options",
     "firebug/lib/events",
     "firebug/js/sourceLink",
     "firebug/lib/css",
     "firebug/lib/dom",
-    "firebug/lib/string",
+    "firebug/lib/string"
 ],
-function(Obj, Firebug, CompilationUnit, Events, SourceLink, Css, Dom, Str) {
+function(Obj, Firebug, CompilationUnit, Options, Events, SourceLink, Css, Dom, Str) {
 
 // ********************************************************************************************* //
 
@@ -62,18 +63,18 @@ Firebug.SourceBoxDecorator.prototype =
         var line = sourceBox.lines[lineNo-1];
 
         // Crop huge lines.
-        if (Firebug.maxScriptLineLength > 0)
+        if (Options.get("maxScriptLineLength") > 0)
         {
-            if (line.length > Firebug.maxScriptLineLength)
-                line = Str.cropString(line, Firebug.maxScriptLineLength);
+            if (line.length > Options.get("maxScriptLineLength"))
+                line = Str.cropString(line, Options.get("maxScriptLineLength"));
         }
 
         var html = Str.escapeForSourceLine(line);
 
         // If the pref says so, replace tabs by corresponding number of spaces.
-        if (Firebug.replaceTabs > 0)
+        if (Options.get("replaceTabs") > 0)
         {
-            var space = new Array(Firebug.replaceTabs + 1).join(" ");
+            var space = new Array(Options.get("replaceTabs") + 1).join(" ");
             html = html.replace(/\t/g, space);
         }
 

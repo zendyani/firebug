@@ -2,6 +2,7 @@
 
 define([
     "firebug/firebug",
+    "firebug/lib/options",
     "firebug/lib/locale",
     "firebug/lib/events",
     "firebug/lib/url",
@@ -11,7 +12,7 @@ define([
     "firebug/lib/string",
     "firebug/lib/xml"
 ],
-function(Firebug, Locale, Events, Url, Firefox, Xpcom, Http, Str, Xml) {
+function(Firebug, Options, Locale, Events, Url, Firefox, Xpcom, Http, Str, Xml) {
 
 // ********************************************************************************************* //
 // Constants
@@ -194,7 +195,7 @@ var NetUtils =
         if (!file.postText)
             return file.postText;
 
-        var limit = Firebug.netDisplayedPostBodyLimit;
+        var limit = Options.get("netDisplayedPostBodyLimit");
         if (file.postText.length > limit && !noLimit)
         {
             return Str.cropString(file.postText, limit,

@@ -7,6 +7,7 @@ define([
     "arch/compilationunit",
     "firebug/lib/xpcom",
     "firebug/chrome/reps",
+    "firebug/lib/options",
     "firebug/lib/locale",
     "firebug/lib/wrapper",
     "firebug/lib/url",
@@ -19,9 +20,9 @@ define([
     "firebug/trace/debug",
     "firebug/js/fbs",
     "firebug/lib/events",
-    "firebug/console/errors",
+    "firebug/console/errors"
 ],
-function(Obj, Firebug, Firefox, CompilationUnit, Xpcom, FirebugReps, Locale,
+function(Obj, Firebug, Firefox, CompilationUnit, Xpcom, FirebugReps, Options, Locale,
     Wrapper, Url, SourceLink, StackFrame, Css, Win, Str, Arr, Debug, FBS, Events) {
 
 // ********************************************************************************************* //
@@ -177,15 +178,15 @@ Firebug.Debugger = Obj.extend(Firebug.ActivableModule,
     // moz
     beginInternalOperation: function() // stop debugger operations like breakOnErrors
     {
-        var state = {breakOnErrors: Firebug.breakOnErrors};
-        Firebug.breakOnErrors = false;
+        var state = {breakOnErrors: Options.get("breakOnErrors")};
+        Options.set("breakOnErrors", false);
         return state;
     },
 
     // moz
     endInternalOperation: function(state)  // pass back the object given by beginInternalOperation
     {
-        Firebug.breakOnErrors = state.breakOnErrors;
+        Options.set("breakOnErrors", state.breakOnErrors);
         return true;
     },
 
@@ -195,7 +196,7 @@ Firebug.Debugger = Obj.extend(Firebug.ActivableModule,
     halt: function(fnOfFrame)
     {
         if(FBTrace.DBG_BP)
-            FBTrace.sysout('debugger.halt '+fnOfFrame);
+            FBTrace.sysout("debugger.halt " + fnOfFrame);
 
         return FBS.halt(this, fnOfFrame);
     },
@@ -1433,12 +1434,12 @@ Firebug.Debugger = Obj.extend(Firebug.ActivableModule,
             Firebug.errorStackTrace = StackFrame.getCorrectedStackTrace(frame, context);
 
             if (FBTrace.DBG_ERRORLOG)
-                FBTrace.sysout("debugger.onError; break=" + Firebug.breakOnErrors +
+                FBTrace.sysout("debugger.onError; break=" + Options.get("breakOnErrors") +
                     ", errorStackTrace:", Firebug.errorStackTrace);
 
             delete context.breakingCause;
 
-            if (Firebug.breakOnErrors || hitErrorBreakpoint)
+            if (Options.get("breakOnErrors") || hitErrorBreakpoint)
             {
                 var eventOrigin = Wrapper.unwrapIValue(frame.executionContext.globalObject);
                 if (!eventOrigin)
@@ -1526,7 +1527,7 @@ Firebug.Debugger = Obj.extend(Firebug.ActivableModule,
         if (!context.breakingCause)
             return 0;
 
-        if (Firebug.breakOnErrors)
+        if (Options.get("breakOnErrors"))
         {
             // Switch of Break on Next tab lightning.
             var panel = context.getPanel("console", true);

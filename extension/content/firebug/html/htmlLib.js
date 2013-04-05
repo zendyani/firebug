@@ -2,14 +2,15 @@
 
 define([
     "firebug/lib/object",
+    "firebug/lib/options",
     "firebug/lib/events",
     "firebug/lib/css",
     "firebug/lib/dom",
     "firebug/lib/search",
     "firebug/lib/xml",
-    "firebug/lib/string",
+    "firebug/lib/string"
 ],
-function(Obj, Events, Css, Dom, Search, Xml, Str) {
+function(Obj, Options, Events, Css, Dom, Search, Xml, Str) {
 
 // ********************************************************************************************* //
 // Constants
@@ -724,7 +725,7 @@ var HTMLLib =
         // we decide not to show the whitespace in the UI.
 
         // XXXsroussey reverted above but added a check for self closing tags
-        if (Firebug.showTextNodesWithWhitespace)
+        if (Options.get("showTextNodesWithWhitespace"))
         {
             return !element.firstChild && Xml.isSelfClosing(element);
         }
@@ -758,7 +759,7 @@ var HTMLLib =
      */
     findNextNodeFrom: function(node)
     {
-        if (Firebug.showTextNodesWithWhitespace)
+        if (Options.get("showTextNodesWithWhitespace"))
         {
             return node;
         }

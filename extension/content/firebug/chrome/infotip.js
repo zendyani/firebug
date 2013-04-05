@@ -5,10 +5,11 @@ define([
     "firebug/firebug",
     "firebug/lib/domplate",
     "firebug/lib/locale",
+    "firebug/lib/options",
     "firebug/lib/events",
     "firebug/lib/dom"
 ],
-function(Obj, Firebug, Domplate, Locale, Events, Dom) {
+function(Obj, Firebug, Domplate, Locale, Options, Events, Dom) {
 
 // ********************************************************************************************* //
 // Constants
@@ -59,7 +60,7 @@ Firebug.InfoTip = Obj.extend(Firebug.Module,
 
     showInfoTip: function(infoTip, panel, target, x, y, rangeParent, rangeOffset)
     {
-        if (!Firebug.showInfoTips)
+        if (!Options.get("showInfoTips"))
             return;
 
         var scrollParent = Dom.getOverflowParent(target);

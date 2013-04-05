@@ -8,8 +8,9 @@ define([
     "firebug/chrome/window",
     "firebug/lib/css",
     "firebug/chrome/plugin",
+    "firebug/lib/options"
 ],
-function(Obj, CompilationUnit, Events, Url, Win, Css) {
+function(Obj, CompilationUnit, Events, Url, Win, Css, Options) {
 
 // ********************************************************************************************* //
 // Constants
@@ -508,7 +509,7 @@ Firebug.TabContext.prototype =
 
         if (!forceDelay)
         {
-            if (!Firebug.throttleMessages)
+            if (!Options.get("throttleMessages"))
             {
                 message.apply(object, args);
                 return false;

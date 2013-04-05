@@ -8,9 +8,10 @@ define([
     "firebug/lib/dom",
     "firebug/lib/string",
     "firebug/lib/xml",
-    "firebug/lib/events",
+    "firebug/lib/options",
+    "firebug/lib/events"
 ],
-function(Obj, Firebug, CommandLine, Css, Dom, Str, Xml, Events) {
+function(Obj, Firebug, CommandLine, Css, Dom, Str, Xml, Options, Events) {
 
 // ************************************************************************************************
 // Constants
@@ -60,7 +61,7 @@ Firebug.CommandLine.Popup = Obj.extend(Firebug.Module,
         var chrome = Firebug.chrome;
         var visible = this.isVisible();
         var isConsole = (panel && panel.name == "console");
-        var showCommandEditor = Firebug.commandEditor;
+        var showCommandEditor = Options.get("commandEditor");
 
         // Disable the console popup button (Firebug toolbar) if the Console panel
         // is disabled or selected.
@@ -184,7 +185,7 @@ Firebug.CommandLine.Popup = Obj.extend(Firebug.Module,
             this.lastFocused = null;
         }
 
-        if (Firebug.commandEditor)
+        if (Options.get("commandEditor"))
         {
             if (visible)
                 commandLine.value = Str.stripNewLines(commandEditor.value);

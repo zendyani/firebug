@@ -8,7 +8,7 @@ define([
     "firebug/lib/dom",
     "firebug/lib/locale",
     "firebug/lib/css",
-    "firebug/lib/options",
+    "firebug/lib/options"
 ],
 function(Obj, Firebug, Events, Menu, Dom, Locale, Css, Options) {
 
@@ -112,7 +112,7 @@ Firebug.CommandEditor = Obj.extend(Firebug.Module,
 
         this.editor.setCaretOffset(this.editor.getCharCount());
 
-        Firebug.chrome.applyTextSize(Firebug.textSize);
+        Firebug.chrome.applyTextSize(Options.get("textSize"));
 
         if (FBTrace.DBG_COMMANDEDITOR)
             FBTrace.sysout("commandEditor.onEditorLoad; SourceEditor loaded");

@@ -348,42 +348,26 @@ Firebug.Console = Obj.extend(ActivableConsole,
         if (!context)
             context = Firebug.currentContext;
 
-        /* Preparation for multiple filters (see issue 4621)
-        if (filterType == "")
-            Firebug.consoleFilterTypes = "";
-        else
-        {
-            var index = Firebug.consoleFilterTypes.indexOf(filterType);
-            if (index >= 0)
-                Firebug.consoleFilterTypes = Firebug.consoleFilterTypes.substr(0, index-1) +
-                    Firebug.consoleFilterTypes.substr(index+filterType.length);
-            else
-                Firebug.consoleFilterTypes += " " + filterType;
-        }
-        */
-
-        Firebug.consoleFilterTypes = filterType;
-
-        Options.set("consoleFilterTypes", Firebug.consoleFilterTypes);
+        Options.set("consoleFilterTypes", filterType);
 
         var panel = this.getPanel(context, true);
         if (panel)
         {
-            panel.setFilter(Firebug.consoleFilterTypes);
+            panel.setFilter(Options.get("consoleFilterTypes"));
             Firebug.Search.update(context);
         }
     },
 
     syncFilterButtons: function(chrome)
     {
-        if (Firebug.consoleFilterTypes == "")
+        if (Options.get("consoleFilterTypes") == "")
         {
             var button = chrome.$("fbConsoleFilter-all");
             button.checked = true;
         }
         else
         {
-            var filterTypes = Firebug.consoleFilterTypes.split(" ");
+            var filterTypes = Options.get("consoleFilterTypes").split(" ");
             for (var type = 0; type < filterTypes.length; type++)
             {
                 var button = chrome.$("fbConsoleFilter-" + filterTypes[type]);

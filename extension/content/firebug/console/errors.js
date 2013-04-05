@@ -4,6 +4,7 @@ define([
     "firebug/lib/object",
     "firebug/firebug",
     "firebug/chrome/reps",
+    "firebug/lib/options",
     "firebug/lib/xpcom",
     "firebug/console/console",
     "firebug/lib/css",
@@ -11,7 +12,7 @@ define([
     "firebug/lib/array",
     "firebug/lib/string"
 ],
-function(Obj, Firebug, FirebugReps, Xpcom, Console, Css, Win, Arr, Str) {
+function(Obj, Firebug, FirebugReps, Options, Xpcom, Console, Css, Win, Arr, Str) {
 
 // ********************************************************************************************* //
 // Constants
@@ -260,7 +261,7 @@ var Errors = Firebug.Errors = Obj.extend(Firebug.Module,
         }
         else
         {
-            if (Firebug.showChromeMessages)
+            if (Options.get("showChromeMessages"))
             {
                 if (ConsoleMessage)
                 {
@@ -355,7 +356,7 @@ var Errors = Firebug.Errors = Obj.extend(Firebug.Module,
         {
             FBTrace.sysout("errors.observe logScriptError " +
                 (Firebug.errorStackTrace ? "have " : "NO ") +
-                (Firebug.showStackTrace ? "show stack trace" : "do not show stack trace ") +
+                (Options.get("showStackTrace") ? "show stack trace" : "do not show stack trace ") +
                 "errorStackTrace error object:",
                 {object: object, errorStackTrace: Firebug.errorStackTrace});
         }
@@ -380,7 +381,7 @@ var Errors = Firebug.Errors = Obj.extend(Firebug.Module,
         if (Firebug.errorStackTrace)
         {
             error.correctWithStackTrace(Firebug.errorStackTrace);
-            if (!Firebug.showStackTrace)
+            if (!Options.get("showStackTrace"))
                 error.trace = null;
         }
 
@@ -702,7 +703,7 @@ function whyNotShown(url, categoryList, isWarning)
 
     if (!categoryList)
     {
-        return Firebug.showChromeErrors ? null :
+        return Options.get("showChromeErrors") ? null :
             "no category, assume chrome, showChromeErrors false";
     }
 
@@ -710,22 +711,22 @@ function whyNotShown(url, categoryList, isWarning)
     for (var i=0; i<categories.length; ++i)
     {
         var category = categories[i];
-        if (category == "CSS" && !Firebug.showCSSErrors)
+        if (category == "CSS" && !Options.get("showCSSErrors"))
         {
             return "showCSSErrors";
         }
         else if ((category == "HTML" || category == "XML" || category == "malformed-xml" ) &&
-            !Firebug.showXMLErrors)
+            !Options.get("showXMLErrors"))
         {
             return "showXMLErrors";
         }
         else if ((category == "javascript" || category == "JavaScript" || category == "DOM")
-                && !isWarning && !Firebug.showJSErrors)
+                && !isWarning && !Options.get("showJSErrors"))
         {
             return "showJSErrors";
         }
         else if ((category == "javascript" || category == "JavaScript" || category == "DOM")
-                && isWarning && !Firebug.showJSWarnings)
+                && isWarning && !Options.get("showJSWarnings"))
         {
             return "showJSWarnings";
         }
@@ -736,7 +737,7 @@ function whyNotShown(url, categoryList, isWarning)
         }
     }
 
-    if (isChrome && !Firebug.showChromeErrors)
+    if (isChrome && !Options.get("showChromeErrors"))
         return "showChromeErrors";
 
     return null;

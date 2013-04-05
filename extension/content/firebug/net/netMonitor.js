@@ -287,7 +287,7 @@ Firebug.NetMonitor = Obj.extend(Firebug.ActivableModule,
 
     syncFilterButtons: function(chrome)
     {
-        var button = chrome.$("fbNetFilter-" + Firebug.netFilterCategory);
+        var button = chrome.$("fbNetFilter-" + Options.get("netFilterCategory"));
         button.checked = true;
     },
 
@@ -458,7 +458,7 @@ var NetHttpObserver =
             // We need to track the request now since the activity observer is not used in case
             // the response comes from BF cache. If it's a regular HTTP request the timing
             // is properly overridden by the activity observer (ACTIVITY_SUBTYPE_REQUEST_HEADER).
-            // Even if the Firebug.netShowBFCacheResponses is false now, the user could
+            // Even if "netShowBFCacheResponses" is false now, the user could
             // switch it on later.
             var xhr = Http.isXHR(request);
             networkContext.post(requestedFile, [request, NetUtils.now(), win, xhr]);

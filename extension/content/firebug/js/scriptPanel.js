@@ -8,6 +8,7 @@ define([
     "firebug/lib/domplate",
     "arch/javascripttool",
     "arch/compilationunit",
+    "firebug/lib/options",
     "firebug/lib/locale",
     "firebug/lib/events",
     "firebug/lib/url",
@@ -29,7 +30,7 @@ define([
     "firebug/js/watchPanel",
 ],
 function (Obj, Firebug, Firefox, FirebugReps, Domplate, JavaScriptTool, CompilationUnit,
-    Locale, Events, Url, SourceLink, StackFrame, Css, Dom, Win, Search, Persist,
+    Options, Locale, Events, Url, SourceLink, StackFrame, Css, Dom, Win, Search, Persist,
     System, Menu, Debug, Keywords) {
 
 // ********************************************************************************************* //
@@ -300,7 +301,7 @@ Firebug.ScriptPanel.prototype = Obj.extend(Firebug.SourceBoxPanel,
                 {
                     context.breakingCause.shown = true;
                     var cause = context.breakingCause;
-                    if (cause && Firebug.showBreakNotification)
+                    if (cause && Options.get("showBreakNotification"))
                     {
                         var box = new Firebug.Breakpoint.BreakNotification(panel.document, cause);
                         box.show(panel.panelNode);
@@ -985,8 +986,8 @@ Firebug.ScriptPanel.prototype = Obj.extend(Firebug.SourceBoxPanel,
             }
         }
 
-        var curDoc = this.searchCurrentDoc(!Firebug.searchGlobal, text, reverse);
-        if (!curDoc && Firebug.searchGlobal)
+        var curDoc = this.searchCurrentDoc(!Options.get("searchGlobal"), text, reverse);
+        if (!curDoc && Options.get("searchGlobal"))
         {
             return this.searchOtherDocs(text, reverse) ||
                 this.searchCurrentDoc(true, text, reverse);

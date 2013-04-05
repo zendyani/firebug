@@ -178,7 +178,7 @@ var FirebugChrome =
         {
             var cmdPopupBrowser = this.getElementById("fbCommandPopupBrowser");
 
-            this.applyTextSize(Firebug.textSize);
+            this.applyTextSize(Options.get("textSize"));
 
             var doc1 = panelBar1.browser.contentDocument;
             Events.addEventListener(doc1, "mouseover", onPanelMouseOver, false);
@@ -501,7 +501,7 @@ var FirebugChrome =
         if (shouldShow && !this.positionInitialzed)
         {
             this.positionInitialzed = true;
-            if (Firebug.framePosition != "detached" && Firebug.framePosition != "bottom")
+            if (Options.get("framePosition") != "detached" && Options.get("framePosition") != "bottom")
             {
                 // null only updates frame position without side effects
                 this.setPosition();
@@ -797,7 +797,7 @@ var FirebugChrome =
             return;
 
         location = location.href || location.url || location.toString();
-        if (Firebug.filterSystemURLs && Url.isSystemURL(location))
+        if (Options.get("filterSystemURLs") && Url.isSystemURL(location))
             return;
 
         return location;
@@ -854,7 +854,7 @@ var FirebugChrome =
         if (context)
         {
             if (!panelName)
-                panelName = context.panelName? context.panelName : Firebug.defaultPanelName;
+                panelName = context.panelName? context.panelName : Options.get("defaultPanelName");
 
             // Make the HTML panel the default panel, which is displayed
             // to the user the very first time.
@@ -1089,7 +1089,7 @@ var FirebugChrome =
 
     setPosition: function(pos)
     {
-        if (Firebug.framePosition == pos)
+        if (Options.get("framePosition") == pos)
             return;
 
         if (pos)
@@ -1099,7 +1099,7 @@ var FirebugChrome =
         }
         else
         {
-            pos = Firebug.framePosition;
+            pos = Options.get("framePosition");
         }
 
         if (pos == "detached")
@@ -1151,7 +1151,7 @@ var FirebugChrome =
         }
 
         Firebug.Options.set("framePosition", pos);
-        return Firebug.framePosition = pos;
+        return pos;
     },
 
     swapBrowsers: function(oldBrowser, newBrowser)

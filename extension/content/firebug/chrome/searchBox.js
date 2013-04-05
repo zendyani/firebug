@@ -7,9 +7,10 @@ define([
     "firebug/lib/search",
     "firebug/lib/system",
     "firebug/lib/string",
+    "firebug/lib/options",
     "firebug/lib/locale"
 ],
-function(Obj, Firebug, Css, Search, System, Str, Locale) {
+function(Obj, Firebug, Css, Search, System, Str, Options, Locale) {
 
 // ********************************************************************************************* //
 // Constants
@@ -190,7 +191,7 @@ Firebug.Search = Obj.extend(Firebug.Module,
 
     isCaseSensitive: function(text)
     {
-        return !!Firebug.searchCaseSensitive || this.isAutoSensitive(text);
+        return !!Options.get("searchCaseSensitive") || this.isAutoSensitive(text);
     },
 
     isAutoSensitive: function(text)
@@ -204,7 +205,7 @@ Firebug.Search = Obj.extend(Firebug.Module,
 
         try
         {
-            if (Firebug.searchUseRegularExpression)
+            if (Options.get("searchUseRegularExpression"))
                 return new RegExp(text, caseSensitive ? "g" : "gi");
             else
                 return new Search.LiteralRegExp(text, false, caseSensitive);

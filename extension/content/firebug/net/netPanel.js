@@ -196,7 +196,7 @@ NetPanel.prototype = Obj.extend(Firebug.ActivablePanel,
             return;
 
         if (!this.filterCategory)
-            this.setFilter(Firebug.netFilterCategory);
+            this.setFilter(Options.get("netFilterCategory"));
 
         this.layout();
 
@@ -239,7 +239,7 @@ NetPanel.prototype = Obj.extend(Firebug.ActivablePanel,
     {
         if (this.table)
         {
-            if (Firebug.netShowBFCacheResponses)
+            if (Options.get("netShowBFCacheResponses"))
                 Css.setClass(this.table, "showBFCacheResponses");
             else
                 Css.removeClass(this.table, "showBFCacheResponses");
@@ -1196,7 +1196,7 @@ NetPanel.prototype = Obj.extend(Firebug.ActivablePanel,
     {
         var cachedSize = 0, totalSize = 0;
 
-        var category = Firebug.netFilterCategory;
+        var category = Options.get("netFilterCategory");
         if (category == "all")
             category = null;
 
@@ -1208,7 +1208,7 @@ NetPanel.prototype = Obj.extend(Firebug.ActivablePanel,
             var file = phase.files[i];
 
             // Do not count BFCache responses if the user says so.
-            if (!Firebug.netShowBFCacheResponses && file.fromBFCache)
+            if (!Options.get("netShowBFCacheResponses") && file.fromBFCache)
                 continue;
 
             if (!category || file.category == category)

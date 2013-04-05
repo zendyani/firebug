@@ -590,7 +590,7 @@ Firebug.HTMLPanel.prototype = Obj.extend(WalkingPanel,
 
         this.markChange();
 
-        var objectNodeBox = Firebug.scrollToMutations || Firebug.expandMutations ?
+        var objectNodeBox = Options.get("scrollToMutations") || Options.get("expandMutations") ?
             this.ioBox.createObjectBox(target) : this.ioBox.findObjectBox(target);
 
         if (!objectNodeBox)
@@ -664,7 +664,7 @@ Firebug.HTMLPanel.prototype = Obj.extend(WalkingPanel,
 
         this.markChange();
 
-        var parentNodeBox = Firebug.scrollToMutations || Firebug.expandMutations ?
+        var parentNodeBox = Options.get("scrollToMutations") || Options.get("expandMutations") ?
             this.ioBox.createObjectBox(parent) : this.ioBox.findObjectBox(parent);
 
         if (!parentNodeBox)
@@ -675,7 +675,7 @@ Firebug.HTMLPanel.prototype = Obj.extend(WalkingPanel,
             return;
         }
 
-        if (!Firebug.showFullTextNodes)
+        if (!Options.get("showFullTextNodes"))
             textValue = Str.cropMultipleLines(textValue);
 
         var parentTag = getNodeBoxTag(parentNodeBox);
@@ -729,7 +729,7 @@ Firebug.HTMLPanel.prototype = Obj.extend(WalkingPanel,
 
                 this.highlightMutation(textNodeBox, parentNodeBox, "mutated");
             }
-            else if (Firebug.scrollToMutations || Firebug.expandMutations)
+            else if (Options.get("scrollToMutations") || Options.get("expandMutations"))
             {
                 // We are not currently rendered but we are set to highlight
                 var objectBox = this.ioBox.createObjectBox(target);
@@ -754,7 +754,7 @@ Firebug.HTMLPanel.prototype = Obj.extend(WalkingPanel,
 
         this.markChange();  // This invalidates the panels for every mutate
 
-        var parentNodeBox = Firebug.scrollToMutations || Firebug.expandMutations
+        var parentNodeBox = Options.get("scrollToMutations") || Options.get("expandMutations")
             ? this.ioBox.createObjectBox(parent)
             : this.ioBox.findObjectBox(parent);
 
@@ -766,7 +766,7 @@ Firebug.HTMLPanel.prototype = Obj.extend(WalkingPanel,
             return;
 
         // Ignore whitespace nodes.
-        if (!Firebug.showTextNodesWithWhitespace && this.isWhitespaceText(target))
+        if (!Options.get("showTextNodesWithWhitespace") && this.isWhitespaceText(target))
             return;
 
         var newParentTag = getNodeTag(parent);
@@ -792,8 +792,8 @@ Firebug.HTMLPanel.prototype = Obj.extend(WalkingPanel,
                 {
                     var childBox = this.ioBox.getChildObjectBox(parentNodeBox);
 
-                    var comments = Firebug.showCommentNodes;
-                    var whitespaces = Firebug.showTextNodesWithWhitespace;
+                    var comments = Options.get("showCommentNodes");
+                    var whitespaces = Options.get("showTextNodesWithWhitespace");
 
                     // Get the right next sibling that match following criteria:
                     // 1) It's not a whitespace text node in case 'show whitespaces' is false.
@@ -833,7 +833,8 @@ Firebug.HTMLPanel.prototype = Obj.extend(WalkingPanel,
 
                 this.highlightMutation(newParentNodeBox, newParentNodeBox, "mutated");
 
-                if (!removal && (Firebug.scrollToMutations || Firebug.expandMutations))
+                if (!removal &&
+                    (Options.get("scrollToMutations") || Options.get("expandMutations")))
                 {
                     objectBox = this.ioBox.createObjectBox(target);
                     this.highlightMutation(objectBox, objectBox, "mutated");
@@ -854,7 +855,7 @@ Firebug.HTMLPanel.prototype = Obj.extend(WalkingPanel,
 
             this.highlightMutation(newParentNodeBox, newParentNodeBox, "mutated");
 
-            if (!removal && (Firebug.scrollToMutations || Firebug.expandMutations))
+            if (!removal && (Options.get("scrollToMutations") || Options.get("expandMutations")))
             {
                 objectBox = this.ioBox.createObjectBox(target);
                 this.highlightMutation(objectBox, objectBox, "mutated");
@@ -868,13 +869,15 @@ Firebug.HTMLPanel.prototype = Obj.extend(WalkingPanel,
     highlightMutation: function(elt, objectBox, type)
     {
         if (FBTrace.DBG_HTML)
-            FBTrace.sysout("html.highlightMutation Firebug.highlightMutations:" +
-                Firebug.highlightMutations, {elt: elt, objectBox: objectBox, type: type});
+        {
+            FBTrace.sysout("html.highlightMutation highlightMutations:" +
+                Options.get("highlightMutations"), {elt: elt, objectBox: objectBox, type: type});
+        }
 
         if (!elt)
             return;
 
-        if (Firebug.scrollToMutations || Firebug.expandMutations)
+        if (Options.get("scrollToMutations") || Options.get("expandMutations"))
         {
             if (this.context.mutationTimeout)
             {
@@ -889,12 +892,12 @@ Firebug.HTMLPanel.prototype = Obj.extend(WalkingPanel,
             {
                 ioBox.openObjectBox(objectBox);
 
-                if (Firebug.scrollToMutations)
+                if (Options.get("scrollToMutations"))
                     Dom.scrollIntoCenterView(objectBox, panelNode);
             }, 200);
         }
 
-        if (Firebug.highlightMutations)
+        if (Options.get("highlightMutations"))
             Css.setClassTimed(elt, type, this.context);
     },
 
@@ -1096,10 +1099,10 @@ Firebug.HTMLPanel.prototype = Obj.extend(WalkingPanel,
 
         if (FBTrace.DBG_HTML)
             FBTrace.sysout("getChildObject firstChild " + Css.getElementCSSSelector(child) +
-                " with Firebug.showTextNodesWithWhitespace " +
-                Firebug.showTextNodesWithWhitespace);
+                " with showTextNodesWithWhitespace=" +
+                Options.get("showTextNodesWithWhitespace"));
 
-        if (Firebug.showTextNodesWithWhitespace)  // then the index is true to the node list
+        if (Options.get("showTextNodesWithWhitespace"))  // then the index is true to the node list
         {
             return child;
         }
@@ -2075,7 +2078,7 @@ Firebug.HTMLPanel.CompleteElement = domplate(FirebugReps.Element,
         if (node.contentDocument)
             return [node.contentDocument.documentElement];
 
-        if (Firebug.showTextNodesWithWhitespace)
+        if (Options.get("showTextNodesWithWhitespace"))
         {
             return Arr.cloneArray(node.childNodes);
         }
@@ -2696,7 +2699,7 @@ function getNodeTag(node, expandAll)
             return expandAll ? Firebug.HTMLPanel.CompleteElement.tag : Firebug.HTMLPanel.Element.tag;
         else if (HTMLLib.isEmptyElement(node))
             return getEmptyElementTag(node);
-        else if (Firebug.showCommentNodes && HTMLLib.hasCommentChildren(node))
+        else if (Options.get("showCommentNodes") && HTMLLib.hasCommentChildren(node))
             return expandAll ? Firebug.HTMLPanel.CompleteElement.tag : Firebug.HTMLPanel.Element.tag;
         else if (HTMLLib.hasNoElementChildren(node))
             return Firebug.HTMLPanel.TextElement.tag;
@@ -2707,7 +2710,7 @@ function getNodeTag(node, expandAll)
         return Firebug.HTMLPanel.TextNode.tag;
     else if (node instanceof window.CDATASection)
         return Firebug.HTMLPanel.CDATANode.tag;
-    else if (node instanceof window.Comment && (Firebug.showCommentNodes || expandAll))
+    else if (node instanceof window.Comment && (Options.get("showCommentNodes") || expandAll))
         return Firebug.HTMLPanel.CommentNode.tag;
     else if (node instanceof Firebug.HTMLModule.SourceText)
         return FirebugReps.SourceText.tag;

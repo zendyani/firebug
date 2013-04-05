@@ -1029,7 +1029,7 @@ FirebugReps.Element = domplate(Firebug.Rep,
 
     getAttrValue: function(attr)
     {
-        var limit = Firebug.displayedAttributeValueLimit;
+        var limit = Options.get("displayedAttributeValueLimit");
         return (limit > 0) ? Str.cropString(attr.value, limit) : attr.value;
     },
 
@@ -1127,14 +1127,14 @@ FirebugReps.Element = domplate(Firebug.Rep,
     getNodeTextGroups: function(element)
     {
         var text =  element.textContent;
-        if (!Firebug.showFullTextNodes)
+        if (!Options.get("showFullTextNodes"))
         {
             text = Str.cropString(text,50);
         }
 
         var escapeGroups=[];
 
-        if (Firebug.showTextNodesWithWhitespace)
+        if (Options.get("showTextNodesWithWhitespace"))
             escapeGroups.push({
                 "group": "whitespace",
                 "class": "nodeWhiteSpace",
@@ -1145,7 +1145,7 @@ FirebugReps.Element = domplate(Firebug.Rep,
                 }
             });
 
-        if (Firebug.entityDisplay != "symbols")
+        if (Options.get("entityDisplay") != "symbols")
             escapeGroups.push({
                 "group": "text",
                 "class": "nodeTextEntity",
@@ -2007,7 +2007,7 @@ FirebugReps.SourceLink = domplate(Firebug.Rep,
                     sourceLink.href + "\': " + exc, exc);
         }
 
-        var maxWidth = Firebug.sourceLinkLabelWidth;
+        var maxWidth = Options.get("sourceLinkLabelWidth");
         if (maxWidth > 0)
             fileName = Str.cropString(fileName, maxWidth);
 
@@ -2241,7 +2241,7 @@ FirebugReps.StackFrame = domplate(Firebug.Rep,
     {
         var fileName = Url.getFileName(frame.href);
 
-        var maxWidth = Firebug.sourceLinkLabelWidth;
+        var maxWidth = Options.get("sourceLinkLabelWidth");
         if (maxWidth > 0)
             var fileName = Str.cropString(fileName, maxWidth);
 

@@ -9,11 +9,13 @@ define([
     "firebug/lib/wrapper",
     "firebug/lib/dom",
     "firebug/lib/trace",
+    "firebug/lib/options",
     "firebug/lib/locale",
     "firebug/console/closureInspector",
     "firebug/chrome/reps",
 ],
-function(Firebug, Obj, Arr, Wrapper, Dom, FBTrace, Locale, ClosureInspector, FirebugReps) {
+function(Firebug, Obj, Arr, Wrapper, Dom, FBTrace, Options, Locale, ClosureInspector,
+    FirebugReps) {
 
 // ********************************************************************************************* //
 // Constants
@@ -62,8 +64,8 @@ DOMMemberProvier.prototype =
             try
             {
                 // Make sure not to touch the prototype chain of the magic scope objects.
-                var ownOnly = Firebug.showOwnProperties || isScope;
-                var enumerableOnly = Firebug.showEnumerableProperties;
+                var ownOnly = Options.get("showOwnProperties") || isScope;
+                var enumerableOnly = Options.get("showEnumerableProperties");
 
                 properties = this.getObjectProperties(contentView, enumerableOnly, ownOnly);
                 properties = Arr.sortUnique(properties);
@@ -85,7 +87,7 @@ DOMMemberProvier.prototype =
                 // __proto__ never shows in enumerations, so add it here. We currently
                 // we don't want it when only showing own properties.
                 if (contentView.__proto__ && Obj.hasProperties(contentView.__proto__) &&
-                    properties.indexOf("__proto__") === -1 && !Firebug.showOwnProperties)
+                    properties.indexOf("__proto__") === -1 && !Options.get("showOwnProperties"))
                 {
                     properties.push("__proto__");
                 }
@@ -150,7 +152,8 @@ DOMMemberProvier.prototype =
                     {
                         add("userClass", userClasses);
                     }
-                    else if (!Firebug.showUserFuncs && Firebug.showInlineEventHandlers &&
+                    else if (!Options.get("showUserFuncs") &&
+                        Options.get("showInlineEventHandlers") &&
                         Dom.isInlineEventHandler(name))
                     {
                         add("userFunction", domHandlers);
@@ -185,7 +188,8 @@ DOMMemberProvier.prototype =
                 }
             }
 
-            if (isScope || (typeof object === "function" && Firebug.showClosures && this.context))
+            if (isScope || (typeof object === "function" && Options.get("showClosures") &&
+                this.context))
             {
                 this.maybeAddClosureMember(object, "proto", proto, level, isScope);
             }
@@ -206,13 +210,13 @@ DOMMemberProvier.prototype =
         ordinals.sort(sortOrdinal);
         members.push.apply(members, ordinals);
 
-        if (Firebug.showUserProps)
+        if (Options.get("showUserProps"))
         {
             userProps.sort(sortName);
             members.push.apply(members, userProps);
         }
 
-        if (Firebug.showUserFuncs)
+        if (Options.get("showUserFuncs"))
         {
             userClasses.sort(sortName);
             members.push.apply(members, userClasses);
@@ -221,13 +225,13 @@ DOMMemberProvier.prototype =
             members.push.apply(members, userFuncs);
         }
 
-        if (Firebug.showDOMProps)
+        if (Options.get("showDOMProps"))
         {
             domProps.sort(sortName);
             members.push.apply(members, domProps);
         }
 
-        if (Firebug.showDOMFuncs)
+        if (Options.get("showDOMFuncs"))
         {
             domClasses.sort(sortName);
             members.push.apply(members, domClasses);
@@ -236,12 +240,12 @@ DOMMemberProvier.prototype =
             members.push.apply(members, domFuncs);
         }
 
-        if (Firebug.showDOMConstants)
+        if (Options.get("showDOMConstants"))
             members.push.apply(members, domConstants);
 
         members.push.apply(members, proto);
 
-        if (Firebug.showInlineEventHandlers)
+        if (Options.get("showInlineEventHandlers"))
         {
             domHandlers.sort(sortName);
             members.push.apply(members, domHandlers);
@@ -249,8 +253,8 @@ DOMMemberProvier.prototype =
 
         if (FBTrace.DBG_DOM)
         {
-            var showEnum = Firebug.showEnumerableProperties;
-            var showOwn = Firebug.showOwnProperties;
+            var showEnum = Options.get("showEnumerableProperties");
+            var showOwn = Options.get("showOwnProperties");
             FBTrace.sysout("dom.getMembers; Report: enum-only: " + showEnum +
                 ", own-only: " + showOwn,
             {
@@ -289,17 +293,18 @@ DOMMemberProvier.prototype =
         var rep = Firebug.getRep(value);
         var tag = rep.shortTag ? rep.shortTag : rep.tag;
 
-        var hasProperties = Obj.hasProperties(value, !Firebug.showEnumerableProperties,
-            Firebug.showOwnProperties);
+        var hasProperties = Obj.hasProperties(value, !Options.get("showEnumerableProperties"),
+            Options.get("showOwnProperties"));
 
         var valueType = typeof value;
         var hasChildren = hasProperties && !(value instanceof FirebugReps.ErrorCopy) &&
             ((valueType === "function") ||
              (valueType === "object" && value !== null) ||
-             (valueType === "string" && value.length > Firebug.stringCropLength));
+             (valueType === "string" && value.length > Options.get("stringCropLength")));
 
         // Special case for closure inspection.
-        if (!hasChildren && valueType === "function" && Firebug.showClosures && this.context)
+        if (!hasChildren && valueType === "function" && Options.get("showClosures") &&
+            this.context)
         {
             try
             {
@@ -322,8 +327,9 @@ DOMMemberProvier.prototype =
                 var proto = value.prototype;
                 if (proto)
                 {
-                    hasChildren = Obj.hasProperties(proto, !Firebug.showEnumerableProperties,
-                        Firebug.showOwnProperties);
+                    hasChildren = Obj.hasProperties(proto,
+                        !Options.get("showEnumerableProperties"),
+                        Options.get("showOwnProperties"));
                 }
             }
             catch (exc) {}

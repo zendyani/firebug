@@ -6,6 +6,7 @@ define([
     "firebug/lib/object",
     "firebug/firebug",
     "firebug/chrome/reps",
+    "firebug/lib/options",
     "firebug/lib/locale",
     "firebug/lib/events",
     "firebug/lib/wrapper",
@@ -29,8 +30,8 @@ define([
     "firebug/console/autoCompleter",
     "firebug/console/commandHistory"
 ],
-function(Obj, Firebug, FirebugReps, Locale, Events, Wrapper, Url, Css, Dom, Firefox, Win, System,
-    Xpath, Str, Xml, Arr, Persist, Keywords, Console, CommandLineHelp, CommandLineInclude,
+function(Obj, Firebug, FirebugReps, Options, Locale, Events, Wrapper, Url, Css, Dom, Firefox, Win,
+    System, Xpath, Str, Xml, Arr, Persist, Keywords, Console, CommandLineHelp, CommandLineInclude,
     CommandLineExposed, ClosureInspector) {
 "use strict";
 
@@ -422,7 +423,7 @@ Firebug.CommandLine = Obj.extend(Firebug.Module,
             return;
         }
 
-        if (!Firebug.commandEditor || context.panelName !== "console")
+        if (!Options.get("commandEditor") || context.panelName !== "console")
         {
             this.clear(context);
             Firebug.Console.log(commandPrefix + " " + expr, context, "command", FirebugReps.Text);
@@ -594,8 +595,8 @@ Firebug.CommandLine = Obj.extend(Firebug.Module,
 
     toggleMultiLine: function(forceCommandEditor)
     {
-        var showCommandEditor = !!forceCommandEditor || !Firebug.commandEditor;
-        if (showCommandEditor != Firebug.commandEditor)
+        var showCommandEditor = !!forceCommandEditor || !Options.get("commandEditor");
+        if (showCommandEditor != Options.get("commandEditor"))
             Firebug.Options.set("commandEditor", showCommandEditor);
     },
 
@@ -633,7 +634,7 @@ Firebug.CommandLine = Obj.extend(Firebug.Module,
         this.setAutoCompleter();
         this.commandHistory = new Firebug.CommandHistory();
 
-        if (Firebug.commandEditor)
+        if (Options.get("commandEditor"))
             this.setMultiLine(true, Firebug.chrome);
     },
 
@@ -895,7 +896,7 @@ Firebug.CommandLine = Obj.extend(Firebug.Module,
         Dom.collapse(Firebug.chrome.$("fbPanelSplitter"), true);
         Dom.collapse(Firebug.chrome.$("fbSidePanelDeck"), true);
 
-        this.setMultiLine(Firebug.commandEditor, Firebug.chrome);
+        this.setMultiLine(Options.get("commandEditor"), Firebug.chrome);
     },
 
     onPanelDisable: function(panelName)
@@ -910,7 +911,7 @@ Firebug.CommandLine = Obj.extend(Firebug.Module,
 
     getCommandLine: function(context)
     {
-        return (!this.isInOtherPanel(context) && Firebug.commandEditor) ? 
+        return (!this.isInOtherPanel(context) && Options.get("commandEditor")) ? 
                 this.getCommandEditor():
                 this.getSingleRowCommandLine();
     },
@@ -924,7 +925,7 @@ Firebug.CommandLine = Obj.extend(Firebug.Module,
 
     getExpression: function(context)
     {
-        return (!this.isInOtherPanel(context) && Firebug.commandEditor) ? 
+        return (!this.isInOtherPanel(context) && Options.get("commandEditor")) ? 
                 this.getCommandEditor().getExpression() :
                 this.getSingleRowCommandLine().value;
     },

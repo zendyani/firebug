@@ -5,6 +5,7 @@ define([
     "firebug/firebug",
     "firebug/lib/domplate",
     "firebug/chrome/reps",
+    "firebug/lib/options",
     "firebug/lib/locale",
     "firebug/lib/wrapper",
     "firebug/lib/url",
@@ -15,7 +16,7 @@ define([
     "firebug/lib/string",
     "firebug/js/fbs",
 ],
-function(Obj, Firebug, Domplate, FirebugReps, Locale, Wrapper, Url, StackFrame, Events,
+function(Obj, Firebug, Domplate, FirebugReps, Options, Locale, Wrapper, Url, StackFrame, Events,
     Css, Dom, Str, FBS) {
 
 // ********************************************************************************************* //
@@ -181,7 +182,7 @@ Firebug.Profiler = Obj.extend(Firebug.Module,
         {
             if (script.callCount)
             {
-                if (!Firebug.filterSystemURLs || !Url.isSystemURL(script.fileName))
+                if (!Options.get("filterSystemURLs") || !Url.isSystemURL(script.fileName))
                 {
                     var sourceLink = Firebug.SourceFile.getSourceLinkForScript(script, context);
                     if (sourceLink && sourceLink.href in sourceFileMap)

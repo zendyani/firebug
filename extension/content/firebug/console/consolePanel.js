@@ -141,7 +141,7 @@ Firebug.ConsolePanel.prototype = Obj.extend(Firebug.ActivablePanel,
         this.showCommandLine(true);
         this.showToolbarButtons("fbConsoleButtons", true);
 
-        this.setFilter(Firebug.consoleFilterTypes);
+        this.setFilter(Options.get("consoleFilterTypes"));
 
         Firebug.chrome.setGlobalAttribute("cmd_firebug_togglePersistConsole", "checked",
             this.persistContent);
@@ -747,13 +747,13 @@ Firebug.ConsolePanel.prototype = Obj.extend(Firebug.ActivablePanel,
         if (shouldShow)
         {
             Dom.collapse(Firebug.chrome.$("fbCommandBox"), false);
-            Firebug.CommandLine.setMultiLine(Firebug.commandEditor, Firebug.chrome);
+            Firebug.CommandLine.setMultiLine(Options.get("commandEditor"), Firebug.chrome);
         }
         else
         {
             // Make sure that entire content of the Console panel is hidden when
             // the panel is disabled.
-            Firebug.CommandLine.setMultiLine(false, Firebug.chrome, Firebug.commandEditor);
+            Firebug.CommandLine.setMultiLine(false, Firebug.chrome, Options.get("commandEditor"));
             Dom.collapse(Firebug.chrome.$("fbCommandBox"), true);
         }
     },

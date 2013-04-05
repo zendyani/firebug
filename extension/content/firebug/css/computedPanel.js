@@ -169,7 +169,7 @@ CSSComputedPanel.prototype = Obj.extend(Firebug.Panel,
     {
         function isUnwantedProp(propName)
         {
-            return !Firebug.showMozillaSpecificStyles && Str.hasPrefix(propName, "-moz");
+            return !Options.get("showMozillaSpecificStyles") && Str.hasPrefix(propName, "-moz");
         }
 
         var win = element.ownerDocument.defaultView;
@@ -195,7 +195,7 @@ CSSComputedPanel.prototype = Obj.extend(Firebug.Panel,
                 Firebug.CSSModule.getPropertyInfo(computedStyle, computedStyle[i]);
 
             if (isUnwantedProp(prop.property) ||
-                (this.cssLogic && !Firebug.showUserAgentCSS && prop.matchedRuleCount == 0))
+                (this.cssLogic && !Options.get("showUserAgentCSS") && prop.matchedRuleCount == 0))
             {
                 continue;
             }
@@ -207,7 +207,7 @@ CSSComputedPanel.prototype = Obj.extend(Firebug.Panel,
 
         if (props.length != 0)
         {
-            if (Firebug.computedStylesDisplay == "alphabetical")
+            if (Options.get("computedStylesDisplay") == "alphabetical")
             {
                 this.sortProperties(props);
 
@@ -234,7 +234,7 @@ CSSComputedPanel.prototype = Obj.extend(Firebug.Panel,
                         var prop = this.cssLogic ? this.cssLogic.getPropertyInfo(propName) :
                             Firebug.CSSModule.getPropertyInfo(computedStyle, propName);
 
-                        if (!Firebug.showUserAgentCSS && prop.matchedRuleCount == 0)
+                        if (!Options.get("showUserAgentCSS") && prop.matchedRuleCount == 0)
                             continue;
 
                         prop.opened = this.styleOpened[propName];
@@ -503,7 +503,7 @@ CSSComputedPanel.prototype = Obj.extend(Firebug.Panel,
             {
                 label: "Sort_alphabetically",
                 type: "checkbox",
-                checked: Firebug.computedStylesDisplay == "alphabetical",
+                checked: Options.get("computedStylesDisplay") == "alphabetical",
                 tooltiptext: "computed.option.tip.Sort_Alphabetically",
                 command: Obj.bind(this.toggleDisplay, this)
             },
@@ -580,7 +580,8 @@ CSSComputedPanel.prototype = Obj.extend(Firebug.Panel,
 
     toggleDisplay: function()
     {
-        var display = Firebug.computedStylesDisplay == "alphabetical" ? "grouped" : "alphabetical";
+        var display = Options.get("computedStylesDisplay") == "alphabetical" ?
+            "grouped" : "alphabetical";
         Options.set("computedStylesDisplay", display);
     },
 
