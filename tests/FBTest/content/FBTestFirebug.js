@@ -13,7 +13,16 @@
 
 ( /** @scope _FBTestFirebug_ @this FBTest */ function() {
 
-Components.utils["import"]("resource://fbtest/EventUtils.js");
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cu = Components.utils;
+
+Cu["import"]("resource://fbtest/EventUtils.js");
+
+//************************************************************************************************
+//Constants
+
+var winWatcher = Cc["@mozilla.org/embedcomp/window-watcher;1"].getService(Ci.nsIWindowWatcher);
 
 // ********************************************************************************************* //
 // Core test APIs (direct access to FBTestApp)
@@ -211,18 +220,9 @@ this.setToKnownState = function()
     FBTest.sysout("FBTestFirebug setToKnownState");
 
     var Firebug = FBTest.FirebugWindow.Firebug;
-    if (Firebug.PanelActivation)
-    {
-        Firebug.PanelActivation.toggleAll("off");  // These should be done with button presses not API calls.
-        Firebug.PanelActivation.toggleAll("none");
-        Firebug.PanelActivation.clearAnnotations();
-    }
-    else // obsolete, remove
-    {
-        Firebug.Activation.toggleAll("off");
-        Firebug.Activation.toggleAll("none");
-        Firebug.Activation.clearAnnotations();
-    }
+    Firebug.PanelActivation.toggleAll("off");  // These should be done with button presses not API calls.
+    Firebug.PanelActivation.toggleAll("none");
+    Firebug.PanelActivation.clearAnnotations(true);
 
     if (Firebug.isDetached())
         Firebug.toggleDetachBar();
@@ -322,7 +322,7 @@ this.sendMouseEvent = function(event, target, win)
     }
 
     var targetIsString = typeof target == "string";
- 
+
     if (!win)
     {
         win = targetIsString ?
@@ -1290,8 +1290,10 @@ this.typeCommand = function(string, useCommandEditor)
  * @param {String} tagName Name of the displayed element.
  * @param {String} class Class of the displayed element.
  * @param {Boolean} if set to false, does not clear the console logs
+ * @param {Boolean} if set to true, use the Command Editor instead of the Command Line
  */
-this.executeCommandAndVerify = function(callback, expression, expected, tagName, classes, clear)
+this.executeCommandAndVerify = function(callback, expression, expected, tagName, classes, clear,
+    useCommandEditor)
 {
     if (clear !== false)
         FBTest.clearConsole();
@@ -1309,7 +1311,7 @@ this.executeCommandAndVerify = function(callback, expression, expected, tagName,
     });
 
     FBTest.progress("Execute expression: " + expression);
-    FBTest.executeCommand(expression);
+    FBTest.executeCommand(expression, undefined, useCommandEditor);
 };
 
 /**
@@ -1946,7 +1948,7 @@ this.expandElements = function(panelNode, className) // className, className, ..
  * 
  * @param {String} panelName Name of the panel that shows the result.
  * @param {Object} config Requirements, which must be fulfilled to trigger the callback function
- *     (can include "tagName", "id", "classes", "counter" and "onlyMutations")
+ *     (can include "tagName", "id", "classes", "attributes", "counter" and "onlyMutations")
  * @param {Function} callback A callback function with one parameter.
  */
 this.waitForDisplayedElement = function(panelName, config, callback)
@@ -2022,6 +2024,13 @@ this.waitForDisplayedElement = function(panelName, config, callback)
         mutationAttributes.id = config.id;
     else
         mutationAttributes.class = config.classes;
+
+    if (config.attributes)
+    {
+        for (var prop in config.attributes)
+            mutationAttributes[prop] = config.attributes[prop];
+    }
+
     var recognizer = new MutationRecognizer(doc.defaultView, config.tagName, mutationAttributes);
 
     var tempCallback = callback;
@@ -2086,17 +2095,57 @@ this.clearConsole = function(chrome)
 // ********************************************************************************************* //
 // Search
 
-this.clearSearchField = function()
+this.clearSearchField = function(callback)
 {
     // FIX ME: characters should be sent into the search box individually
     // (using key events) to simulate incremental search.
     var searchBox = FW.Firebug.chrome.$("fbSearchBox");
     searchBox.value = "";
+
+    var doc = searchBox.ownerDocument;
+    doc.defaultView.focus();
+    FBTest.focus(searchBox);
+
+    FBTest.sendKey("RETURN", "fbSearchBox");
+
+    if (callback)
+    {
+        // Firebug uses search delay so, we need to wait till the panel is updated
+        // (see firebug/chrome/searchBox module, searchDelay constant).
+        setTimeout(function() {
+            callback()
+        }, 250);
+    }
 }
 
 this.getSearchFieldText = function()
 {
     return FW.Firebug.chrome.$("fbSearchBox").value;
+}
+
+this.setSearchFieldText = function(searchText, callback)
+{
+    FBTest.clearSearchField(function()
+    {
+        // Focus the search box.
+        var searchBox = FW.Firebug.chrome.$("fbSearchBox");
+        var doc = searchBox.ownerDocument;
+        doc.defaultView.focus();
+        FBTest.focus(searchBox);
+
+        // Send text into the input box.
+        FBTest.synthesizeText(searchText, doc.defaultView);
+        FBTest.sendKey("RETURN", "fbSearchBox");
+
+        if (callback)
+        {
+            // Firebug uses search delay so, we need to wait till the panel is updated
+            // (see firebug/chrome/searchBox module, searchDelay constant).
+            setTimeout(function() {
+                callback()
+            }, 250);
+        }
+    });
 }
 
 /**
@@ -2192,12 +2241,9 @@ this.searchInHtmlPanel = function(searchText, callback)
 {
     var panel = FBTest.selectPanel("html");
 
-    // Set search string into the search box.
+    // Reset the search box.
     var searchBox = FW.Firebug.chrome.$("fbSearchBox");
-
-    // FIXME: characters should be sent into the search box individually
-    // (using key events) to simulate incremental search.
-    searchBox.value = searchText;
+    searchBox.value = "";
 
     // The listener is automatically removed when the test window
     // is unloaded in case the seletion actually doesn't occur,
@@ -2212,10 +2258,29 @@ this.searchInHtmlPanel = function(searchText, callback)
         }
     });
 
-    // Setting the 'value' property doesn't fire an 'input' event so,
-    // press enter instead (asynchronously).
+    // Focus the search box.
+    var doc = searchBox.ownerDocument;
+    doc.defaultView.focus();
+    FBTest.focus(searchBox);
+
+    // Send text into the input box.
+    this.synthesizeText(searchText, doc.defaultView);
+
     FBTest.sendKey("RETURN", "fbSearchBox");
 };
+
+this.synthesizeText = function(str, win)
+{
+    synthesizeText({
+        composition: {
+            string: str,
+            clauses: [
+                { length: str.length, attr: Ci.nsIDOMWindowUtils.COMPOSITION_ATTR_RAWINPUT }
+            ]
+        },
+        caret: { start: str.length, length: 0 }
+    }, win);
+}
 
 // ********************************************************************************************* //
 // HTML Panel
@@ -2322,6 +2387,21 @@ this.getSelectedNodeBox = function()
 
 //********************************************************************************************* //
 // CSS panel
+this.getAtRulesByType = function(type)
+{
+    var panel = FBTest.selectPanel("stylesheet");
+    var ruleTypes = panel.panelNode.getElementsByClassName("cssRuleName");
+
+    var rules = [];
+    for (var i=0, len = ruleTypes.length; i<len; ++i)
+    {
+        if (ruleTypes[i].textContent == type)
+            rules.push(FW.FBL.getAncestorByClass(ruleTypes[i], "cssRule"));
+    }
+
+    return rules;
+};
+
 this.getStyleRulesBySelector = function(selector)
 {
     var panel = FBTest.selectPanel("stylesheet");
@@ -2331,7 +2411,7 @@ this.getStyleRulesBySelector = function(selector)
     for (var i = 0, len = selectors.length; i < len; ++i)
     {
         if (selectors[i].textContent.indexOf(selector) != -1)
-            rules.push(FW.FBL.getAncestorByClass(selector, "cssRule"));
+            rules.push(FW.FBL.getAncestorByClass(selectors[i], "cssRule"));
     }
 
     return rules;
@@ -2638,6 +2718,19 @@ this.TaskList.prototype =
         var args = FW.FBL.cloneArray(arguments);
         args = FW.FBL.arrayInsert(args, 1, [window]);
         this.tasks.push(FW.FBL.bind.apply(this, args));
+    },
+
+    /**
+     * Wrap a function that does not take a callback parameter and push it to the list.
+     */
+    wrapAndPush: function(func)
+    {
+        var args = Array.prototype.slice.call(arguments, 1);
+        this.push(function(callback)
+        {
+            func.apply(null, args);
+            callback();
+        });
     },
 
     run: function(callback, delay)

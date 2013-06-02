@@ -23,17 +23,16 @@ function(Firebug, Obj, Arr, Wrapper, Dom, FBTrace, Options, Locale, ClosureInspe
 // ********************************************************************************************* //
 // DOM Member Provider
 
-function DOMMemberProvier(context)
+function DOMMemberProvider(context)
 {
     this.context = context;
 }
 
-DOMMemberProvier.prototype =
+DOMMemberProvider.prototype =
 {
     /**
      * @param object a user-level object wrapped in security blanket
      * @param level for a.b.c, level is 2
-     * @param optional context
      */
     getMembers: function(object, level)
     {
@@ -299,8 +298,7 @@ DOMMemberProvier.prototype =
         var valueType = typeof value;
         var hasChildren = hasProperties && !(value instanceof FirebugReps.ErrorCopy) &&
             ((valueType === "function") ||
-             (valueType === "object" && value !== null) ||
-             (valueType === "string" && value.length > Options.get("stringCropLength")));
+             (valueType === "object" && value !== null));
 
         // Special case for closure inspection.
         if (!hasChildren && valueType === "function" && Options.get("showClosures") &&
@@ -408,7 +406,7 @@ DOMMemberProvier.prototype =
     // Add the magic "(closure)" property.
     maybeAddClosureMember: function(object, type, props, level, isScope)
     {
-        var win = context.getCurrentGlobal();
+        var win = this.context.getCurrentGlobal();
         var wrapper = ClosureInspector.getScopeWrapper(object, win, this.context, isScope);
         if (!wrapper)
             return;
@@ -548,7 +546,7 @@ function getPropertyDescriptor(object, propName)
 // ********************************************************************************************* //
 // Registration
 
-return DOMMemberProvier;
+return DOMMemberProvider;
 
 // ********************************************************************************************* //
 });

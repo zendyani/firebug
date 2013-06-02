@@ -7,10 +7,10 @@ define([
     "firebug/lib/search",
     "firebug/lib/system",
     "firebug/lib/string",
-    "firebug/lib/options",
-    "firebug/lib/locale"
+    "firebug/lib/locale",
+    "firebug/lib/options"
 ],
-function(Obj, Firebug, Css, Search, System, Str, Options, Locale) {
+function(Obj, Firebug, Css, Search, System, Str, Locale, Options) {
 
 // ********************************************************************************************* //
 // Constants
@@ -126,7 +126,7 @@ Firebug.Search = Obj.extend(Firebug.Module,
 
         if (FBTrace.DBG_SEARCH)
         {
-            FBTrace.sysout("search Firebug.Search.isAutoSensitive(value):" +
+            FBTrace.sysout("search Firebug.Search.isAutoSensitive(value): " +
                 Firebug.Search.isAutoSensitive(value) + " for " + value, searchBox);
         }
 
@@ -178,14 +178,14 @@ Firebug.Search = Obj.extend(Firebug.Module,
                 searchBox.status = (found ? "found" : "notfound");
 
                 if (FBTrace.DBG_SEARCH)
-                    FBTrace.sysout("search "+searchBox.status+" "+value);
+                    FBTrace.sysout("search " + searchBox.status + " " + value);
             }, searchDelay);
         }
     },
 
     onNotFound: function()
     {
-        if (this.status != 'notfound')
+        if (this.status != "notfound")
             System.beep();
     },
 
@@ -223,7 +223,7 @@ Firebug.Search = Obj.extend(Firebug.Module,
         return {
             label: label,
             tooltiptext: tooltiptext,
-            checked: Firebug[option],
+            checked: Options.get(option),
             option: option,
             command: Obj.bindFixed(this.onToggleSearchOption, this, option)
         };
@@ -231,7 +231,7 @@ Firebug.Search = Obj.extend(Firebug.Module,
 
     onToggleSearchOption: function(option)
     {
-        Options.set(option, !Firebug[option]);
+        Options.togglePref(option);
 
         // Make sure the "Case Sensitive || Case Insensitive" label is updated.
         this.update();

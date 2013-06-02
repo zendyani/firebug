@@ -7,9 +7,10 @@ define([
     "firebug/chrome/reps",
     "firebug/lib/dom",
     "firebug/lib/css",
+    "firebug/lib/object",
     "firebug/lib/array",
 ],
-function(Domplate, Options, Locale, FirebugReps, Dom, Css, Arr) {
+function(Domplate, Options, Locale, FirebugReps, Dom, Css, Obj, Arr) {
 
 // ********************************************************************************************* //
 // Constants
@@ -326,6 +327,13 @@ FirebugReps.Table = domplate(Firebug.Rep,
         }
 
         return true;
+    },
+
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+    getId: function()
+    {
+        return Obj.getUniqueId();
     }
 });
 };

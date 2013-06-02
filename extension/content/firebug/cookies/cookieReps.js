@@ -71,7 +71,7 @@ CookieReps.Rep = domplate(Firebug.Rep,
 CookieReps.CookieRow = domplate(CookieReps.Rep,
 /** @lends CookieReps.CookieRow */
 {
-    inspectable: false,
+    inspectable: true,
 
     cookieTag:
         FOR("cookie", "$cookies",
@@ -235,7 +235,7 @@ CookieReps.CookieRow = domplate(CookieReps.Rep,
     {
         return !!cookie.cookie.rejected;
     },
-    
+
     getRawSize: function(cookie)
     {
         var size = cookie.cookie.name.length + cookie.cookie.rawValue.length;
@@ -264,7 +264,20 @@ CookieReps.CookieRow = domplate(CookieReps.Rep,
         return cookie.cookie.isSecure ? Locale.$STR("cookies.secure.label") : "";
     },
 
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+    // Highlighter
+
+    highlightObject: function(object, context)
+    {
+    },
+
+    unhighlightObject: function(object, context)
+    {
+    },
+
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
     // Firebug rep support
+
     supportsObject: function(cookie)
     {
         return cookie instanceof Cookie;
@@ -277,8 +290,20 @@ CookieReps.CookieRow = domplate(CookieReps.Rep,
 
     getRealObject: function(cookie, context)
     {
-        return cookie.cookie;
+        var realObject = cookie.cookie.rawCookie;
+        if (!realObject)
+        {
+            if (FBTrace.DBG_COOKIES || FBTrace.DBG_ERRORS)
+                FBTrace.sysout("cookies.getRealObject; ERROR no real cookie object!");
+
+            realObject = cookie.cookie;
+        }
+
+        return realObject;
     },
+
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+    // Context Menu
 
     getContextMenuItems: function(cookie, target, context)
     {
@@ -451,7 +476,7 @@ CookieReps.CookieRow = domplate(CookieReps.Rep,
     {
         if (Events.isLeftClick(event))
         {
-            var domain = event.target.innerHTML;
+            var domain = event.target.textContent;
             if (domain)
             {
                 Events.cancelEvent(event);
@@ -701,28 +726,17 @@ CookieReps.CookieChanged = domplate(CookieReps.Rep,
     // Console
     tag:
         DIV({"class": "cookieEvent", _repObject: "$object"},
-            TABLE({cellpadding: 0, cellspacing: 0},
-                TBODY(
-                    TR(
-                        TD({width: "100%"},
-                            SPAN(Locale.$STR("cookies.console.cookie"), " "),
-                            SPAN({"class": "cookieNameLabel", onclick: "$onClick"}, 
-                                "$object|getName", 
-                                " "),
-                            SPAN({"class": "cookieActionLabel"}, 
-                                "$object|getAction", 
-                                ".&nbsp;&nbsp;"),
-                            SPAN({"class": "cookieValueLabel"}, 
-                                "$object|getValue")
-                        ),
-                        TD(
-                            SPAN({"class": "cookieDomainLabel", onclick: "$onClickDomain",
-                                title: "$object|getOriginalURI"}, "$object|getDomain"),
-                            SPAN("&nbsp;") 
-                        )
-                    )
-                )
-            )
+        	SPAN(Locale.$STR("cookies.console.cookie"), " "),
+            SPAN({"class": "cookieNameLabel", onclick: "$onClick"}, 
+                "$object|getName", 
+                " "),
+            SPAN({"class": "cookieActionLabel"}, 
+                "$object|getAction", 
+                ".&nbsp;&nbsp;"),
+            SPAN({"class": "cookieValueLabel"}, 
+                "$object|getValue"),
+            DIV({"class": "cookieDomainLabel", onclick: "$onClickDomain",
+                title: "$object|getOriginalURI"}, "$object|getDomain")
         ),
 
     // Event handlers
@@ -1027,7 +1041,7 @@ CookieReps.CookieTable = domplate(CookieReps.Rep,
                     TD({id: "colRawSize", role: "columnheader",
                         "class": "cookieHeaderCell a11yFocus"},
                         DIV({"class": "cookieHeaderCellBox",
-                            title: Locale.$STR("cookies.header.size.tooltip")}, 
+                            title: Locale.$STR("cookies.header.rawSize.tooltip")}, 
                         Locale.$STR("cookies.header.rawSize"))
                     ),
                     TD({id: "colSize", role: "columnheader",
@@ -1361,18 +1375,17 @@ function checkList(panel)
     if (!panel || !this.panelNode)
         return; 
 
-    var row = Dom.getElementByClass(this.panelNode, "cookieRow");
+    var row = this.panelNode.getElementsByClassName("cookieRow")[0];
     while (row)
     {
         var rep = row.repObject;
-        if ((rep.cookie.name != row.firstChild.firstChild.innerHTML) ||
-            (rep.cookie.path != row.childNodes[3].firstChild.innerHTML))
+        var displayedCookieName = row.getElementsByClassName("cookieNameLabel")[0].textContent;
+        var displayedCookiePath = row.getElementsByClassName("cookiePathLabel")[0].textContent;
+        if (rep.cookie.name != displayedCookieName || rep.cookie.path != displayedCookiePath)
         {
-            FBTrace("---> Check failed!");
-            FBTrace("--->" + rep.rawHost + ", " + rep.cookie.name + ", " +
-                rep.cookie.path);
-            FBTrace("    " + row.firstChild.firstChild.innerHTML + ", " +
-                row.childNodes[3].firstChild.innerHTML);
+            FBTrace.sysout("---> Check failed!");
+            FBTrace.sysout("--->" + rep.rawHost + ", " + rep.cookie.name + ", " + rep.cookie.path);
+            FBTrace.sysout("    " + displayedCookieName + ", " + displayedCookiePath);
         }
 
         row = row.nextSibling;

@@ -85,12 +85,10 @@ CSSStylePanel.prototype = Obj.extend(CSSStyleSheetPanel.prototype,
             ),
 
         CSSFontPropValueTag:
-            SPAN({"class": "cssFontPropValue"},
                 FOR("part", "$propValueParts",
                     SPAN({"class": "$part.type|getClass", _repObject: "$part.font"}, "$part.value"),
                     SPAN({"class": "cssFontPropSeparator"}, "$part|getSeparator")
-                )
-            ),
+                ),
 
         getSeparator: function(part)
         {
@@ -164,6 +162,8 @@ CSSStylePanel.prototype = Obj.extend(CSSStyleSheetPanel.prototype,
                     var propValue = propValueElem.textContent;
                     var fontPropValueParts = getFontPropValueParts(element, propValue, propName);
 
+                    Css.setClass(propValueElem, "cssFontPropValue");
+
                     // xxxsz: Web fonts not being loaded at display time
                     // won't be marked as used. See issue 5420.
                     this.template.CSSFontPropValueTag.replace({propValueParts: fontPropValueParts},
@@ -216,6 +216,13 @@ CSSStylePanel.prototype = Obj.extend(CSSStyleSheetPanel.prototype,
 
     getElementRules: function(element, rules, usedProps, inheritMode)
     {
+        function filterMozPseudoElements(pseudoElement)
+        {
+            return !Str.hasPrefix(pseudoElement, "::-moz") ||
+                pseudoElement == "::-moz-placeholder" ||
+                pseudoElement == "::-moz-selection";;
+        }
+
         var pseudoElements = [""];
         var inspectedRules, displayedRules = {};
 
@@ -223,10 +230,15 @@ CSSStylePanel.prototype = Obj.extend(CSSStyleSheetPanel.prototype,
         if (!inheritMode)
             pseudoElements = Arr.extendArray(pseudoElements, Css.pseudoElements);
 
+        // xxxsz: Do not show Mozilla-specific pseudo-elements for now (see issue 6451)
+        // Pseudo-element rules just apply to specific elements, so we need a way to find out
+        // which elements that are
+        pseudoElements = pseudoElements.filter(filterMozPseudoElements);
+        
         // The domUtils API requires the pseudo-element selectors to be prefixed by only one colon 
         pseudoElements.forEach(function(pseudoElement, i)
         {
-        	if (Str.hasPrefix(pseudoElement, "::"))
+            if (Str.hasPrefix(pseudoElement, "::"))
                 pseudoElements[i] = pseudoElement.substr(1);
         });
 

@@ -15,6 +15,10 @@
     color: #000000;
 }
 
+.cssRulesListBox > .cssRule {
+    padding-left: 2em;
+}
+
 .cssRule:first-child {
     margin-top: 6px;
 }
@@ -102,10 +106,6 @@
     display: none;
 }
 
-.cssComputedHeader > .twisty {
-    background-position: 4px 4px !important;
-}
-
 .cssInheritLabel,
 .cssComputedLabel {
     margin-right: 0.25em;
@@ -179,7 +179,7 @@
 
 .cssProp.disabledStyle {
     background: transparent url(chrome://firebug/skin/disable.svg) no-repeat 2px 1px;
-    filter: url("chrome://mozapps/skin/extensions/extensions.svg#greyscale");
+    filter: url(chrome://firebug/skin/filters.svg#grayscale);
     color: #CCCCCC;
 }
 

@@ -1091,52 +1091,9 @@ Firebug.Debugger = Obj.extend(Firebug.ActivableModule,
         // otherwise we cannot be called.
         context.jsDebuggerCalledUs = true;
 
-        if (!Firebug.Console.injector.isAttached(context, frameWin))
-        {
-            this.injectConsole(context, frameWin);
-        }
-        else
-        {
-            if (FBTrace.DBG_CONSOLE)
-                FBTrace.sysout("debugger.supportsGlobal console isAttached to "+
-                    Win.safeGetWindowLocation(frameWin)+" in  "+context.getName());
-        }
-
         this.breakContext = context;
         //FBTrace.sysout("debugger.js this.breakContext "+this.breakContext.getName());
         return true;
-    },
-
-    injectConsole: function(context, frameWin)
-    {
-        if (Firebug.Console.isAlwaysEnabled())
-        {
-            // This is how the console is injected ahead of JS running on the page
-            FBS.filterConsoleInjections = true;
-            try
-            {
-                var consoleReady = Firebug.Console.isReadyElsePreparing(context, frameWin);
-            }
-            catch(exc)
-            {
-                if (FBTrace.DBG_ERRORS)
-                    FBTrace.sysout("debugger.supportsGlobal injectConsole FAILS: "+exc, exc);
-            }
-            finally
-            {
-                FBS.filterConsoleInjections = false;
-            }
-
-            if (FBTrace.DBG_CONSOLE)
-                FBTrace.sysout("debugger.supportsGlobal injectConsole consoleReady:"+consoleReady+
-                    " jsDebuggerCalledUs: "+context.jsDebuggerCalledUs, frameWin);
-        }
-        else
-        {
-            if (FBTrace.DBG_CONSOLE)
-                FBTrace.sysout("debugger.supportsGlobal injectConsole console NOT enabled ",
-                    frameWin);
-        }
     },
 
     onLock: function(state)
@@ -1175,6 +1132,8 @@ Firebug.Debugger = Obj.extend(Firebug.ActivableModule,
                     return this.debuggerTracer(context, frame);
                 else
                     this.setDebuggerKeywordCause(context, frame);
+                if (!context.breakingCause)
+                    return RETURN_CONTINUE;
             }
 
             return this.stop(context, frame, type);
@@ -1908,14 +1867,19 @@ Firebug.Debugger = Obj.extend(Firebug.ActivableModule,
 
                 for (var row = panel.panelNode.firstChild; row; row = row.nextSibling)
                 {
-                    var error = row.firstChild.repObject;
+                    var errorMessage = row.getElementsByClassName("objectBox-errorMessage");
+                    if (!errorMessage.length)
+                        continue;
+
+                    errorMessage = errorMessage[0];
+                    var error = errorMessage.repObject;
                     if (error instanceof FirebugReps.ErrorMessageObj && error.href == url &&
                         error.lineNo == lineNo)
                     {
                         if (isSet)
-                            Css.setClass(row.firstChild, "breakForError");
+                            Css.setClass(errorMessage, "breakForError");
                         else
-                            Css.removeClass(row.firstChild, "breakForError");
+                            Css.removeClass(errorMessage, "breakForError");
 
                         Firebug.connection.dispatch( "onToggleErrorBreakpoint",
                             [context, url, lineNo, isSet]);
@@ -2143,7 +2107,7 @@ Firebug.Debugger = Obj.extend(Firebug.ActivableModule,
     {
         var url = null;
         // Ignores any trailing whitespace in |source|
-        const reURIinComment = /\/\/@\ssourceURL=\s*(\S*?)\s*$/m;
+        const reURIinComment = /\/\/[@#]\ssourceURL=\s*(\S*?)\s*$/m;
         var m = reURIinComment.exec(lines[lines.length - 1]);
 
         if (m)
@@ -2555,24 +2519,6 @@ Firebug.Debugger = Obj.extend(Firebug.ActivableModule,
     {
         if (FBTrace.DBG_ACTIVATION)
             FBTrace.sysout("loadedContext needs to trigger watchpanel updates");
-
-        /*
-        var watchPanel = this.ableWatchSidePanel(context);
-        var needNow = watchPanel && watchPanel.watches;
-        var watchPanelState = Firebug.getPanelState({name: "watches", context: context});
-        var needPersistent = watchPanelState && watchPanelState.watches;
-        if (needNow || needPersistent)
-        {
-            Firebug.CommandLine.isReadyElsePreparing(context);
-            if (watchPanel)
-            {
-                context.setTimeout(function refreshWatchesAfterCommandLineReady()
-                {
-                    watchPanel.refresh();
-                });
-            }
-        }
-        */
 
         if (FBTrace.DBG_SOURCEFILES)
             FBTrace.sysout("debugger("+this.debuggerName+").loadedContext enabled on load: "+

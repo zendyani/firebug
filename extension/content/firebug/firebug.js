@@ -1049,6 +1049,9 @@ window.Firebug =
 
         // Dispatch to all modules so that additional settings can be reset.
         Events.dispatch(modules, "resetAllOptions", []);
+
+        // Dispatch to all modules so 'after' actions can be executed.
+        Events.dispatch(modules, "afterResetAllOptions", []);
     },
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -1315,8 +1318,6 @@ window.Firebug =
     },
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
     // nsISupports
 
     QueryInterface : function(iid)
@@ -1437,32 +1438,10 @@ Firebug.getConsoleByGlobal = function getConsoleByGlobal(global)
 {
     try
     {
-        var context = Firebug.connection.getContextByWindow(global);
-        if (context)
-        {
-            var handler = Firebug.Console.injector.getConsoleHandler(context, global);
-
-            if (!handler)
-                handler = Firebug.Console.isReadyElsePreparing(context, global);;
-
-            if (handler)
-            {
-                FBTrace.sysout("Firebug.getConsoleByGlobal " + handler.console + " for " +
-                    context.getName(), handler);
-
-                return handler.console;
-            }
-
-            if (FBTrace.DBG_ERRORS)
-                FBTrace.sysout("Firebug.getConsoleByGlobal FAILS, no handler for global " +
-                    global + " " + Win.safeGetWindowLocation(global), global);
-        }
-        else
-        {
-            if (FBTrace.DBG_ERRORS)
-                FBTrace.sysout("Firebug.getConsoleByGlobal FAILS, no context for global " +
-                    global, global);
-        }
+        if (!(global instanceof Window))
+            throw new Error("global is not a Window object");
+        var win = Wrapper.wrapObject(global);
+        return Firebug.Console.getExposedConsole(win);
     }
     catch (exc)
     {
@@ -2444,17 +2423,18 @@ Firebug.MeasureBox =
 
     measureText: function(value)
     {
-        this.measureBox.innerHTML = value ? Str.escapeForSourceLine(value) : "m";
+        this.measureBox.textContent = value || "m";
         return {width: this.measureBox.offsetWidth, height: this.measureBox.offsetHeight-1};
     },
 
     measureInputText: function(value)
     {
-        value = value ? Str.escapeForTextNode(value) : "m";
+        if (!value)
+            value = "m";
         if (!Options.get("showTextNodesWithWhitespace"))
-            value = value.replace(/\t/g,'mmmmmm').replace(/\ /g,'m');
+            value = value.replace(/\t/g, "mmmmmm").replace(/\ /g, "m");
 
-        this.measureBox.innerHTML = value;
+        this.measureBox.textContent = value;
         return {width: this.measureBox.offsetWidth, height: this.measureBox.offsetHeight-1};
     },
 

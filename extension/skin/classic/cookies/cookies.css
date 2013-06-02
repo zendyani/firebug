@@ -11,7 +11,15 @@
 /************************************************************************************************/
 /* Support for console */
 
+.cookieEvent {
+	position: relative;
+	width: 100%;
+}
+
 .cookieEvent .cookieDomainLabel {
+    position: absolute;
+    top: 0;
+    right: 0;
     font-family: Lucida Grande, sans-serif;
     font-weight: bold;
     color: #0000FF;
@@ -21,10 +29,9 @@
 .logRow-cookiesCleared,
 .logRow-cookiesRejected,
 .logRow-cookie:hover {
-    padding: 2px 0px 1px 22px !important;
-    background-image: url(chrome://firebug/skin/cookies/cookie.svg) !important;
-    background-repeat: no-repeat !important;
-    background-position: 4px 2px !important;
+    background-image: url(chrome://firebug/skin/cookies/cookie.svg);
+    background-repeat: no-repeat;
+    background-position: 4px 3px;
 }
 
 .logRow-cookiesRejected .cookieRejectedList {
@@ -60,6 +67,10 @@
 
 .logRow-cookiesCleared > DIV {
     padding: 1px 0 2px 0 !important;
+}
+
+.logRow-cookie > div > .logContent {
+    padding-left: 22px;
 }
 
 /* Container for document.cookie log within the Console panel */
@@ -111,11 +122,11 @@
 
 .cookieHeaderSorted > .cookieHeaderCellBox {
     border-right-color: #6B7C93;
-    background: url(chrome://firebug/skin/arrowDown.png) no-repeat right;    
+    background: url(chrome://firebug/skin/arrowDown.svg) no-repeat calc(100% - 4px);    
 }
 
 .cookieHeaderSorted.sortedAscending > .cookieHeaderCellBox {
-    background-image: url(chrome://firebug/skin/arrowUp.png);
+    background-image: url(chrome://firebug/skin/arrowUp.svg);
 }
 
 .cookieHeaderSorted:hover:active {
@@ -182,20 +193,33 @@
 }
 
 .cookieRowHeader {
+    position: relative;
+    height: 15px;
     margin-right: 0 !important;
 }
 
 /* Display breakpoint disc */
 .cookieRow .cookieRowHeader {
-    background-position: 5px 1px;
+    background-position: 5px 3px;
 }
 
 .cookieRow[breakpoint="true"] .cookieRowHeader {
-    background-image: url(chrome://firebug/skin/breakpoint.png);
+    background-image: url(chrome://firebug/skin/breakpoint.svg);
 }
 
 .cookieRow[breakpoint="true"][disabledBreakpoint="true"] .cookieRowHeader {
-    background-image: url(chrome://firebug/skin/breakpointDisabled.png);
+    background-image: none;
+}
+
+.cookieRow[breakpoint="true"][disabledBreakpoint="true"] .cookieRowHeader::before {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 5px;
+    width: 12px;
+    height: 12px;
+    background: url(chrome://firebug/skin/breakpoint.svg) no-repeat;
+    opacity: 0.5;
 }
 
 #cookieBreakpointBar {

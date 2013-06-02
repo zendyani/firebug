@@ -12,10 +12,11 @@ define([
     "firebug/lib/string",
     "firebug/lib/array",
     "firebug/console/closureInspector",
+    "firebug/console/commandLineExposed",
     "firebug/editor/editor"
 ],
 function(Obj, Firebug, Domplate, Locale, Options, Events, Wrapper, Dom, Str, Arr,
-    ClosureInspector, Editor) {
+    CommandLineExposed, ClosureInspector, Editor) {
 
 // ********************************************************************************************* //
 // Constants
@@ -209,7 +210,7 @@ Firebug.JSAutoCompleter = function(textBox, completionBox, options)
             this.completionBase.expr = preExpr;
             this.completionBase.pre = preParsed;
             var ev = autoCompleteEval(context, preExpr, spreExpr,
-                preParsed, spreParsed, this.options.includeCurrentScope);
+                preParsed, spreParsed, this.options);
             prevCompletions = null;
             this.completionBase.candidates = ev.completions;
             this.completionBase.hiddenCandidates = ev.hiddenCompletions;
@@ -257,7 +258,7 @@ Firebug.JSAutoCompleter = function(textBox, completionBox, options)
                 // insensitively, and shares its upper-case characters. The
                 // exception to this is that for global completions, the first
                 // character must match exactly (see issue 6030).
-                var name = candidates[i];
+                var cand = candidates[i], name = cand.name;
                 if (!Str.hasPrefix(name.toLowerCase(), lowPrefix))
                     continue;
 
@@ -276,9 +277,9 @@ Firebug.JSAutoCompleter = function(textBox, completionBox, options)
                 }
                 if (!fail)
                 {
-                    ciValid.push(name);
+                    ciValid.push(cand);
                     if (Str.hasPrefix(name, prefix))
-                        valid.push(name);
+                        valid.push(cand);
                 }
             }
             ++cind;
@@ -317,12 +318,15 @@ Firebug.JSAutoCompleter = function(textBox, completionBox, options)
      */
     this.pickDefaultCandidate = function(prevCompletions)
     {
-        var list = this.completions.list, ind;
+        var list = this.completions.list.map(function(x)
+        {
+            return x.name;
+        }), ind;
 
         // If the typed expression is an extension of the previous completion, keep it.
         if (prevCompletions && Str.hasPrefix(this.completions.prefix, prevCompletions.prefix))
         {
-            var lastCompletion = prevCompletions.list[prevCompletions.index];
+            var lastCompletion = prevCompletions.list[prevCompletions.index].name;
             ind = list.indexOf(lastCompletion);
             if (ind !== -1)
                 return ind;
@@ -339,7 +343,7 @@ Firebug.JSAutoCompleter = function(textBox, completionBox, options)
             });
         };
         var special = {
-            "": ["document", "console", "frames", "window", "parseInt", "undefined",
+            "": ["document", "console", "frames", "window", "parseInt", "undefined", "navigator",
                 "Array", "Math", "Object", "String", "XMLHttpRequest", "Window"],
             "window.": ["console"],
             "location.": ["href"],
@@ -382,7 +386,9 @@ Firebug.JSAutoCompleter = function(textBox, completionBox, options)
             "toSource": "toString",
             "toFixed": "toString",
             "watch": "toString",
-            "pattern": "parentNode"
+            "pattern": "parentNode",
+            "inspect": "include",
+            "home": "history"
         };
         if (replacements.hasOwnProperty(list[ind]))
         {
@@ -417,7 +423,7 @@ Firebug.JSAutoCompleter = function(textBox, completionBox, options)
      */
     this.getCurrentCompletion = function()
     {
-        return (this.completions ? this.completions.list[this.completions.index] : null);
+        return (this.completions ? this.completions.list[this.completions.index].name : null);
     };
 
     /**
@@ -664,7 +670,7 @@ Firebug.JSAutoCompleter = function(textBox, completionBox, options)
 
     this.pageCycle = function(dir)
     {
-        var list = this.completions.list, selIndex = this.completions.index;
+        var length = this.completions.list.length, selIndex = this.completions.index;
 
         if (!this.isPopupOpen())
         {
@@ -674,7 +680,7 @@ Firebug.JSAutoCompleter = function(textBox, completionBox, options)
         }
 
         var top = this.popupTop, bottom = this.popupBottom;
-        if (top === 0 && bottom === list.length)
+        if (top === 0 && bottom === length)
         {
             // For a single scroll page, act like home/end.
             this.topCycle(dir);
@@ -685,7 +691,7 @@ Firebug.JSAutoCompleter = function(textBox, completionBox, options)
         if (dir === -1)
             immediateTarget = (top === 0 ? top : top + 2);
         else
-            immediateTarget = (bottom === list.length ? bottom: bottom - 2) - 1;
+            immediateTarget = (bottom === length ? bottom: bottom - 2) - 1;
         if ((selIndex - immediateTarget) * dir < 0)
         {
             // The selection has not yet reached the edge target, so jump to it.
@@ -696,8 +702,8 @@ Firebug.JSAutoCompleter = function(textBox, completionBox, options)
             // Show the next page.
             if (dir === -1 && top - popupSize <= 0)
                 selIndex = 0;
-            else if (dir === 1 && bottom + popupSize >= list.length)
-                selIndex = list.length - 1;
+            else if (dir === 1 && bottom + popupSize >= length)
+                selIndex = length - 1;
             else
                 selIndex = immediateTarget + dir*popupSize;
         }
@@ -732,7 +738,7 @@ Firebug.JSAutoCompleter = function(textBox, completionBox, options)
 
         var list = this.completions.list, selIndex = this.completions.index;
 
-        if (this.completions.list.length <= popupSize)
+        if (list.length <= popupSize)
         {
             this.popupTop = 0;
             this.popupBottom = list.length;
@@ -778,26 +784,30 @@ Firebug.JSAutoCompleter = function(textBox, completionBox, options)
         for (var i = this.popupTop; i < this.popupBottom; i++)
         {
             var prefixLen = this.completions.prefix.length;
-            var completion = list[i];
+            var completion = list[i], name = completion.name;
 
             var hbox = this.completionPopup.ownerDocument.
                 createElementNS("http://www.w3.org/1999/xhtml", "div");
             hbox.completionIndex = i;
+            hbox.classList.add("completionLine");
 
             var pre = this.completionPopup.ownerDocument.
                 createElementNS("http://www.w3.org/1999/xhtml", "span");
-            var preText = this.completionBase.expr + completion.substr(0, prefixLen);
+            var preText = this.completionBase.expr + name.substr(0, prefixLen);
             pre.textContent = preText;
             pre.classList.add("userTypedText");
 
             var post = this.completionPopup.ownerDocument.
                 createElementNS("http://www.w3.org/1999/xhtml", "span");
-            var postText = completion.substr(prefixLen);
+            var postText = name.substr(prefixLen);
             post.textContent = postText;
             post.classList.add("completionText");
 
             if (i === selIndex)
                 this.selectedPopupElement = hbox;
+
+            if (completion.type === CompletionType.API)
+                hbox.classList.add("apiCompletion");
 
             hbox.appendChild(pre);
             hbox.appendChild(post);
@@ -1765,9 +1775,7 @@ function propertiesToHide(expr, obj)
         );
 
         // Hide ourselves.
-        ret.push("_FirebugCommandLine", "_firebug",
-            "_firebugUnwrappedDebuggerObject", "__fb_scopedVars"
-        );
+        ret.push("_firebug", "_firebugUnwrappedDebuggerObject", "__fb_scopedVars");
     }
 
     // Old and ugly.
@@ -2229,7 +2237,13 @@ function evalPropChain(out, preExpr, origExpr, context)
     return true;
 }
 
-function autoCompleteEval(context, preExpr, spreExpr, preParsed, spreParsed, includeCurrentScope)
+
+var CompletionType = {
+    "NORMAL": 0,
+    "API": 1
+};
+
+function autoCompleteEval(context, preExpr, spreExpr, preParsed, spreParsed, options)
 {
     var out = {
         spreExpr: spreExpr,
@@ -2282,7 +2296,7 @@ function autoCompleteEval(context, preExpr, spreExpr, preParsed, spreParsed, inc
             // Complete variables from the local scope
 
             var contentView = Wrapper.getContentView(out.window);
-            if (context.stopped && includeCurrentScope)
+            if (context.stopped && options.includeCurrentScope)
             {
                 out.completions = Firebug.Debugger.getCurrentFrameKeys(context);
             }
@@ -2297,7 +2311,7 @@ function autoCompleteEval(context, preExpr, spreExpr, preParsed, spreParsed, inc
                 setCompletionsFromObject(out, context.global, context);
             }
 
-            // Also add names of variables declared previously in the typed code.
+            // Add names of variables declared previously in the typed code.
             var previousDeclarations = getNewlyDeclaredNames(spreParsed);
             out.completions.push.apply(out.completions, previousDeclarations);
         }
@@ -2330,6 +2344,27 @@ function autoCompleteEval(context, preExpr, spreExpr, preParsed, spreParsed, inc
         // but JSD makes that slow (issue 6256). Sort and do manual reordering instead.
         out.completions = reorderPropertyNames(Arr.sortUnique(out.completions));
         out.hiddenCompletions = reorderPropertyNames(Arr.sortUnique(out.hiddenCompletions));
+
+        var wrap = function(x)
+        {
+            return {type: CompletionType.NORMAL, name: x};
+        };
+        out.completions = out.completions.map(wrap);
+        out.hiddenCompletions = out.hiddenCompletions.map(wrap);
+
+        // Add things from the Command Line API, if we are signalled to,
+        // and it is not unavailable due to being stopped in the debugger
+        // (issue 5321).
+        if (!spreExpr && options.includeCommandLineAPI && !context.stopped)
+        {
+            var global = Wrapper.unwrapObject(out.window);
+            CommandLineExposed.completionList.forEach(function(name)
+            {
+                if (!(name in global))
+                    out.completions.push({type: CompletionType.API, name: name});
+            });
+        }
+
     }
     catch (exc)
     {

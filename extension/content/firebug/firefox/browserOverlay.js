@@ -24,6 +24,7 @@ var Cu = Components.utils;
 
 Locale.registerStringBundle("chrome://firebug/locale/firebug.properties");
 Locale.registerStringBundle("chrome://firebug/locale/cookies.properties");
+Locale.registerStringBundle("chrome://firebug/locale/selectors.properties");
 
 Cu.import("resource://firebug/loader.js");
 Cu.import("resource://firebug/fbtrace.js");
@@ -290,6 +291,23 @@ BrowserOverlay.prototype =
         });
     },
 
+    onViewMenuShowing: function()
+    {
+        var suspendMarker = this.win.document.getElementById("firebugStatus");
+
+        // Check whether Firebug is open
+        var open = false;
+        if (this.win.Firebug.chrome)
+        {
+            var fbContentBox = this.win.Firebug.chrome.$("fbContentBox");
+            open = fbContentBox.getAttribute("collapsed") == "true" ? false : true;
+        }
+
+        var firebugViewMenuItem = this.win.document.
+            getElementById("menu_firebug_viewToggleFirebug");
+        firebugViewMenuItem.setAttribute("checked", open);
+    },
+
     onPositionPopupShowing: function(popup)
     {
         while (popup.lastChild)
@@ -402,7 +420,6 @@ BrowserOverlay.prototype =
         // https://bugzilla.mozilla.org/show_bug.cgi?id=433168
         if (typeof(contextMenu.prototype.isTargetAFormControl) != "undefined")
         {
-            // https://bugzilla.mozilla.org/show_bug.cgi?id=433168
             var setTargetOriginal = this.setTargetOriginal = contextMenu.prototype.setTarget;
             contextMenu.prototype.setTarget = function(aNode, aRangeParent, aRangeOffset)
             {
@@ -437,8 +454,11 @@ BrowserOverlay.prototype =
         if (typeof(contextMenu) == "undefined")
             return;
 
-        contextMenu.prototype.setTarget = this.setTargetOriginal;
-        contextMenu.prototype.initItems = this.initItemsOriginal;
+        if (this.setTargetOriginal)
+            contextMenu.prototype.setTarget = this.setTargetOriginal;
+
+        if (this.initItemsOriginal)
+            contextMenu.prototype.initItems = this.initItemsOriginal;
     },
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
