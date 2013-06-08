@@ -84,10 +84,14 @@ NetPanel.prototype = Obj.extend(Firebug.ActivablePanel,
         this.onContextMenu = Obj.bind(this.onContextMenu, this);
 
         Firebug.ActivablePanel.initialize.apply(this, arguments);
+
+        // Listen for set filters, so the panel is properly updated when needed
+        Firebug.NetMonitor.addListener(this);
     },
 
     destroy: function(state)
     {
+        Firebug.NetMonitor.removeListener(this);
         Firebug.ActivablePanel.destroy.apply(this, arguments);
     },
 
@@ -199,8 +203,8 @@ NetPanel.prototype = Obj.extend(Firebug.ActivablePanel,
         if (!enabled)
             return;
 
-        if (!this.filterCategory)
-            this.setFilter(Options.get("netFilterCategory"));
+        if (!this.filterCategories)
+            this.setFilter(Options.get("netFilterCategories").split(" "));
 
         this.layout();
 
@@ -226,18 +230,8 @@ NetPanel.prototype = Obj.extend(Firebug.ActivablePanel,
 
     updateOption: function(name, value)
     {
-        if (name == "netFilterCategory")
-        {
-            Firebug.NetMonitor.syncFilterButtons(Firebug.chrome);
-            Firebug.connection.eachContext(function syncFilters(context)
-            {
-                Firebug.NetMonitor.onToggleFilter(context, value);
-            });
-        }
-        else if (name == "netShowBFCacheResponses")
-        {
+        if (name == "netShowBFCacheResponses")
             this.updateBFCacheResponses();
-        }
     },
 
     updateBFCacheResponses: function()
@@ -784,6 +778,14 @@ NetPanel.prototype = Obj.extend(Firebug.ActivablePanel,
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+    onFiltersSet: function(filterCategories)
+    {
+        this.setFilter(filterCategories);
+        this.updateSummaries(NetUtils.now(), true);
+    },
+
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
     updateFile: function(file)
     {
         if (!file.invalid)
@@ -1203,9 +1205,9 @@ NetPanel.prototype = Obj.extend(Firebug.ActivablePanel,
     {
         var cachedSize = 0, totalSize = 0;
 
-        var category = Options.get("netFilterCategory");
-        if (category == "all")
-            category = null;
+        var categories = this.filterCategories;
+        if (categories == "all")
+            categories = null;
 
         var fileCount = 0;
         var minTime = 0, maxTime = 0;
@@ -1218,7 +1220,7 @@ NetPanel.prototype = Obj.extend(Firebug.ActivablePanel,
             if (!Options.get("netShowBFCacheResponses") && file.fromBFCache)
                 continue;
 
-            if (!category || file.category == category)
+            if (!categories || categories.indexOf(file.category) != -1)
             {
                 if (file.loaded)
                 {
@@ -1396,17 +1398,17 @@ NetPanel.prototype = Obj.extend(Firebug.ActivablePanel,
         }
     },
 
-    setFilter: function(filterCategory)
+    setFilter: function(filterCategories)
     {
-        this.filterCategory = filterCategory;
+        this.filterCategories = filterCategories;
 
         var panelNode = this.panelNode;
         for (var category in NetUtils.fileCategories)
         {
-            if (filterCategory != "all" && category != filterCategory)
-                Css.setClass(panelNode, "hideCategory-"+category);
+            if (filterCategories.join(" ") != "all" && filterCategories.indexOf(category) == -1)
+                Css.setClass(panelNode, "hideCategory-" + category);
             else
-                Css.removeClass(panelNode, "hideCategory-"+category);
+                Css.removeClass(panelNode, "hideCategory-" + category);
         }
     },
 

@@ -69,7 +69,7 @@ const prefNames =  // XXXjjb TODO distribute to modules
     "showRulers",
 
     // Net
-    "netFilterCategory", "netDisplayedResponseLimit",
+    "netFilterCategories", "netDisplayedResponseLimit",
     "netDisplayedPostBodyLimit", "netPhaseInterval", "sizePrecision",
     "netParamNameLimit", "netShowPaintEvents", "netShowBFCacheResponses",
     "netHtmlPreviewHeight",
@@ -273,6 +273,33 @@ var Options =
         }
 
         return prefs[prefName];
+    },
+
+    getDefault: function(name)
+    {
+        return Options.getDefaultPref(this.prefDomain, name);
+    },
+
+    getDefaultPref: function(prefDomain, name)
+    {
+        var defaultPrefs = prefService.getDefaultBranch(prefDomain + ".");
+        var type = defaultPrefs.getPrefType(name);
+
+        var value = null;
+        if (type == nsIPrefBranch.PREF_STRING)
+            value = defaultPrefs.getCharPref(name);
+        else if (type == nsIPrefBranch.PREF_INT)
+            value = defaultPrefs.getIntPref(name);
+        else if (type == nsIPrefBranch.PREF_BOOL)
+            value = defaultPrefs.getBoolPref(name);
+
+        if (FBTrace.DBG_OPTIONS)
+        {
+            FBTrace.sysout("options.getDefaultPref "+prefName+" has type "+
+                this.getPreferenceTypeName(type)+" and value "+value);
+        }
+
+        return value;
     },
 
     set: function(name, value)
