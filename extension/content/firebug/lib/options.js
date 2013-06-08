@@ -17,7 +17,7 @@ const PrefService = Cc["@mozilla.org/preferences-service;1"];
 
 const nsIPrefService = Ci.nsIPrefService;
 const prefService = PrefService.getService(nsIPrefService);
-const prefs = PrefService.getService(nsIPrefBranch);
+const prefBranch = PrefService.getService(nsIPrefBranch);
 
 const prefNames =  // XXXjjb TODO distribute to modules
 [
@@ -86,6 +86,7 @@ const prefNames =  // XXXjjb TODO distribute to modules
 ];
 
 var optionUpdateMap = {};
+var prefs = {};
 
 // ********************************************************************************************* //
 
@@ -116,7 +117,7 @@ var Options =
 
     shutdown: function()
     {
-        prefs.removeObserver(this.prefDomain, this, false);
+        prefBranch.removeObserver(this.prefDomain, this, false);
     },
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -145,7 +146,7 @@ var Options =
             return;
 
         var name = data.substr(Options.prefDomain.length+1);  // +1 for .
-        var value = this.get(name);
+        var value = this.get(name, true);
 
         if (FBTrace.DBG_OPTIONS)
             FBTrace.sysout("options.observe name = value: "+name+"= "+value+"\n");
@@ -162,6 +163,10 @@ var Options =
         try
         {
             optionUpdateMap[name] = 1;
+
+            // xxxsz: The option is set to the global Firebug scope only for
+            // backwards compatibility.
+            // People should use Options.get() and Options.set() instead
             Firebug[name] = value;
 
             Events.dispatch(this.listeners, "updateOption", [name, value]);
@@ -192,7 +197,7 @@ var Options =
         {
             // https://developer.mozilla.org/en/Code_snippets/Preferences
             // This is the reason why you should usually pass strings ending with a dot to
-            // getBranch(), like prefs.getBranch("accessibility.").
+            // getBranch(), like prefBranch.getBranch("accessibility.").
             var defaultBranch = prefService.getDefaultBranch(this.prefDomain+"."); //
 
             var type = this.getPreferenceTypeByExample(typeof(value));
@@ -205,14 +210,14 @@ var Options =
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
     // Options
-    // TODO support per context options eg break on error
+    // TODO support per context options e.g. break on error
 
     initializePrefs: function()
     {
         for (var i = 0; i < prefNames.length; ++i)
             Firebug[prefNames[i]] = this.getPref(this.prefDomain, prefNames[i]);
 
-        prefs.addObserver(this.prefDomain, this, false);
+        prefBranch.addObserver(this.prefDomain, this, false);
 
         var basePrefNames = prefNames.length;
 
@@ -234,30 +239,40 @@ var Options =
         this.set(name, !this.get(name));
     },
 
-    get: function(name)
+    get: function(name, forceCacheUpdate)
     {
-        return Options.getPref(this.prefDomain, name);
+        return Options.getPref(this.prefDomain, name, forceCacheUpdate);
     },
 
-    getPref: function(prefDomain, name)
+    getPref: function(prefDomain, name, forceCacheUpdate)
     {
         var prefName = prefDomain + "." + name;
-
-        var type = prefs.getPrefType(prefName);
-
         var value = null;
-        if (type == nsIPrefBranch.PREF_STRING)
-            value = prefs.getCharPref(prefName);
-        else if (type == nsIPrefBranch.PREF_INT)
-            value = prefs.getIntPref(prefName);
-        else if (type == nsIPrefBranch.PREF_BOOL)
-            value = prefs.getBoolPref(prefName);
 
-        if (FBTrace.DBG_OPTIONS)
-            FBTrace.sysout("options.getPref "+prefName+" has type "+
-                this.getPreferenceTypeName(type)+" and value "+value);
+        if (typeof forceCacheUpdate == "undefined")
+            forceCacheUpdate = false;
 
-        return value;
+        if (!prefs.hasOwnProperty(prefName) || forceCacheUpdate)
+        {
+            var type = prefBranch.getPrefType(prefName);
+    
+            if (type == nsIPrefBranch.PREF_STRING)
+                value = prefBranch.getCharPref(prefName);
+            else if (type == nsIPrefBranch.PREF_INT)
+                value = prefBranch.getIntPref(prefName);
+            else if (type == nsIPrefBranch.PREF_BOOL)
+                value = prefBranch.getBoolPref(prefName);
+
+            prefs[prefName] = value;
+
+            if (FBTrace.DBG_OPTIONS)
+            {
+                FBTrace.sysout("options.getPref "+prefName+" has type "+
+                    this.getPreferenceTypeName(type)+" and value "+value);
+            }
+        }
+
+        return prefs[prefName];
     },
 
     set: function(name, value)
@@ -278,7 +293,7 @@ var Options =
         var prefName = prefDomain + "." + name;
 
         var type = this.getPreferenceTypeByExample((prefType ? prefType : typeof(value)));
-        if (!this.setPreference(prefName, value, type, prefs))
+        if (!this.setPreference(prefName, value, type, prefBranch))
             return;
 
         if (FBTrace.DBG_OPTIONS)
@@ -287,15 +302,23 @@ var Options =
 
     setPreference: function(prefName, value, type, prefBranch)
     {
+        prefs[prefName] = value;
+
         if (FBTrace.DBG_OPTIONS)
             FBTrace.sysout("setPreference "+prefName, {prefName: prefName, value: value});
 
         if (type == nsIPrefBranch.PREF_STRING)
+        {
             prefBranch.setCharPref(prefName, value);
+        }
         else if (type == nsIPrefBranch.PREF_INT)
+        {
             prefBranch.setIntPref(prefName, value);
+        }
         else if (type == nsIPrefBranch.PREF_BOOL)
+        {
             prefBranch.setBoolPref(prefName, value);
+        }
         else if (type == nsIPrefBranch.PREF_INVALID)
         {
             FBTrace.sysout("options.setPref FAILS: Invalid preference "+prefName+" with type "+
@@ -321,7 +344,7 @@ var Options =
         }
         else
         {
-            type = prefs.getPrefType(prefName);
+            type = prefBranch.getPrefType(prefName);
         }
 
         return type;
@@ -345,12 +368,13 @@ var Options =
     clearPref: function(prefDomain, name)
     {
         var prefName = prefDomain + "." + name;
-        if (prefs.prefHasUserValue(prefName))
-            prefs.clearUserPref(prefName);
+        if (prefBranch.prefHasUserValue(prefName))
+            prefBranch.clearUserPref(prefName);
     },
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
     // Firebug UI text zoom
+    // xxxsz: This shouldn't be part of the Options module
 
     changeTextSize: function(amt)
     {
@@ -395,7 +419,7 @@ var Options =
      */
     resetAllOptions: function()
     {
-        var preferences = prefs.getChildList("extensions.firebug", {});
+        var preferences = prefBranch.getChildList("extensions.firebug", {});
         for (var i = 0; i < preferences.length; i++)
         {
             if (preferences[i].indexOf("DBG_") == -1)
@@ -403,8 +427,8 @@ var Options =
                 if (FBTrace.DBG_OPTIONS)
                     FBTrace.sysout("Clearing option: " + i + ") " + preferences[i]);
 
-                if (prefs.prefHasUserValue(preferences[i]))  // avoid exception
-                    prefs.clearUserPref(preferences[i]);
+                if (prefBranch.prefHasUserValue(preferences[i]))  // avoid exception
+                    prefBranch.clearUserPref(preferences[i]);
             }
             else
             {
@@ -416,7 +440,7 @@ var Options =
 
     forceSave: function()
     {
-        prefs.savePrefFile(null);
+        prefBranch.savePrefFile(null);
     }
 };
 
