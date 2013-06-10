@@ -3,14 +3,14 @@
 define([
     "firebug/lib/object",
     "arch/compilationunit",
+    "firebug/lib/options",
     "firebug/lib/events",
     "firebug/lib/url",
     "firebug/chrome/window",
     "firebug/lib/css",
-    "firebug/chrome/plugin",
-    "firebug/lib/options"
+    "firebug/chrome/plugin"
 ],
-function(Obj, CompilationUnit, Events, Url, Win, Css, Options) {
+function(Obj, CompilationUnit, Options, Events, Url, Win, Css) {
 
 // ********************************************************************************************* //
 // Constants
