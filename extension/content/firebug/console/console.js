@@ -22,11 +22,6 @@ function(Obj, Firebug, Firefox, Events, Win, Search, Xml, Options) {
 // ********************************************************************************************* //
 // Constants
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
 var maxQueueRequests = 500;
 
 // Note: createDefaultReturnValueInstance() is a local helper (see below).
@@ -241,16 +236,6 @@ Firebug.Console = Obj.extend(ActivableConsole,
 
     onObserverChange: function(observer)
     {
-        if (this.isAlwaysEnabled())
-        {
-            // we inject the console during JS compiles so we need jsd
-            Firebug.Debugger.addObserver(this);
-        }
-        else
-        {
-            Firebug.Debugger.removeObserver(this);
-        }
-
         if (!Firebug.getSuspended())  // then Firebug is in action
             this.onResumeFirebug();   // and we need to test to see if we need to addObserver
         else
@@ -352,27 +337,6 @@ Firebug.Console = Obj.extend(ActivableConsole,
         {
             if (FBTrace.DBG_ERRORS)
                 FBTrace.sysout("console.setStatus ERROR no firebugStatus element");
-        }
-    },
-
-    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-    // BTI
-
-    /**
-     * A previously enabled tool becomes active and sends us an event.
-     */
-    onActivateTool: function(toolname, active)
-    {
-        if (FBTrace.DBG_ACTIVATION)
-            FBTrace.sysout("Console.onActivateTool "+toolname+" = "+active);
-
-        // Console depends on script to get injected (for now)
-        if (toolname === "script")
-        {
-            if (this.isAlwaysEnabled())
-            {
-                //this.asTool.setActive(active);  // then track the activation of the debugger;
-            }
         }
     },
 
