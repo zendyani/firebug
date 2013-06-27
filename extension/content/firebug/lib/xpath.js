@@ -168,11 +168,14 @@ Xpath.getElementsByXPath = function(doc, xpath)
 
 Xpath.evaluateXPath = function(doc, xpath, contextNode, resultType)
 {
+    // XXXsimon: I'm getting errors about "XPathResult is undefined". For now,
+    // just hard-code the constants (it's faster anyway).
+
     if (contextNode === undefined)
         contextNode = doc;
 
     if (resultType === undefined)
-        resultType = XPathResult.ANY_TYPE;
+        resultType = 0; // XPathResult.ANY_TYPE;
 
     try
     {
@@ -186,31 +189,31 @@ Xpath.evaluateXPath = function(doc, xpath, contextNode, resultType)
 
     switch (result.resultType)
     {
-        case XPathResult.NUMBER_TYPE:
+        case 1: // XPathResult.NUMBER_TYPE:
             return result.numberValue;
 
-        case XPathResult.STRING_TYPE:
+        case 2: // XPathResult.STRING_TYPE:
             return result.stringValue;
             
-        case XPathResult.BOOLEAN_TYPE:
+        case 3: // XPathResult.BOOLEAN_TYPE:
             return result.booleanValue;
 
-        case XPathResult.UNORDERED_NODE_ITERATOR_TYPE:
-        case XPathResult.ORDERED_NODE_ITERATOR_TYPE:
+        case 4: // XPathResult.UNORDERED_NODE_ITERATOR_TYPE:
+        case 5: // XPathResult.ORDERED_NODE_ITERATOR_TYPE:
             var nodes = [];
             for (var item = result.iterateNext(); item; item = result.iterateNext())
                 nodes.push(item);
             return nodes;
             
-        case XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE:
-        case XPathResult.ORDERED_NODE_SNAPSHOT_TYPE:
+        case 6: // XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE:
+        case 7: // XPathResult.ORDERED_NODE_SNAPSHOT_TYPE:
             var nodes = [];
             for (var i = 0; i < result.snapshotLength; ++i)
                 nodes.push(result.snapshotItem(i));
             return nodes;
             
-        case XPathResult.ANY_UNORDERED_NODE_TYPE:
-        case XPathResult.FIRST_ORDERED_NODE_TYPE:
+        case 8: // XPathResult.ANY_UNORDERED_NODE_TYPE:
+        case 9: // XPathResult.FIRST_ORDERED_NODE_TYPE:
             return result.singleNodeValue;
     }
 };
