@@ -27,10 +27,11 @@ define([
     "firebug/chrome/menu",
     "arch/compilationunit",
     "firebug/net/netUtils",
+    "firebug/chrome/panelActivation",
 ],
 function(Obj, Arr, Firebug, Domplate, Firefox, Xpcom, Locale, HTMLLib, Events, Wrapper, Options,
     Url, SourceLink, StackFrame, Css, Dom, Win, System, Xpath, Str, Xml, ToggleBranch,
-    ClosureInspector, Menu, CompilationUnit, NetUtils) {
+    ClosureInspector, Menu, CompilationUnit, NetUtils, PanelActivation) {
 
 with (Domplate) {
 
@@ -2495,7 +2496,7 @@ FirebugReps.ErrorMessage = domplate(Firebug.Rep,
 
     hasStackTrace: function(error)
     {
-        return error && error.trace;
+        return error && (error.trace || error.missingTraceBecauseNoDebugger);
     },
 
     hasBreakSwitch: function(error)
@@ -2647,12 +2648,29 @@ FirebugReps.ErrorMessage = domplate(Firebug.Rep,
 
             if (Css.hasClass(target, "opened"))
             {
+                var panel = Firebug.getElementPanel(event.target);
+
                 if (target.stackTrace)
+                {
                     FirebugReps.StackTrace.tag.append({object: target.stackTrace}, traceBox);
+                }
+                else if (target.repObject.missingTraceBecauseNoDebugger)
+                {
+                    var hasScriptPanel = PanelActivation.isPanelEnabled("script");
+                    var enableScriptPanel = function()
+                    {
+                        var scriptPanelType = Firebug.getPanelType("script");
+                        PanelActivation.enablePanel(scriptPanelType);
+                    };
+                    // XXX: Localize this
+                    var msg = (hasScriptPanel ?
+                        "The Script panel was disabled when this error was generated." :
+                        "The Script panel must be enabled for get stack traces. <a>Enable Script panel.</a>");
+                    FirebugReps.Description.render(msg, traceBox, enableScriptPanel);
+                }
 
                 if (Firebug.A11yModel.enabled)
                 {
-                    var panel = Firebug.getElementPanel(event.target);
                     Events.dispatch(panel.fbListeners, "modifyLogRow", [panel, traceBox]);
                 }
             }
