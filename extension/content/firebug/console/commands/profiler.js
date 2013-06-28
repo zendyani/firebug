@@ -262,6 +262,25 @@ Firebug.Profiler = Obj.extend(Firebug.Module,
 
         Events.dispatch(this.fbListeners, "stopProfiling", [context,
             groupRow.originalTitle, calls, cancelReport]);
+    },
+
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+    commandLineProfileStart: function(context, title)
+    {
+        if (!this.profilerEnabled)
+        {
+            var msg = Locale.$STR("ProfilerRequiresTheScriptPanel");
+            Firebug.Console.logFormatted([msg], context, "warn");
+            return;
+        }
+        Firebug.Profiler.startProfiling(context, title);
+    },
+
+    commandLineProfileEnd: function(context)
+    {
+        if (this.profilerEnabled)
+            this.stopProfiling(context);
     }
 });
 
@@ -531,22 +550,13 @@ function ProfileCall(script, context, callCount, totalTime, totalOwnTime, minTim
 function profile(context, args)
 {
     var title = args[0];
-    if (Firebug.Profiler.profilerEnabled)
-    {
-        Firebug.Profiler.startProfiling(context, title);
-    }
-    else
-    {
-        var msg = Locale.$STR("ProfilerRequiresTheScriptPanel");
-        Firebug.Console.logFormatted([msg], context, "warn");
-    }
+    Firebug.Profiler.commandLineProfileStart(context, title);
     return Firebug.Console.getDefaultReturnValue();
 };
 
 function profileEnd(context)
 {
-    if (Firebug.Profiler.profilerEnabled)
-        Firebug.Profiler.stopProfiling(context);
+    Firebug.Profiler.commandLineProfileEnd(context);
     return Firebug.Console.getDefaultReturnValue();
 };
 
