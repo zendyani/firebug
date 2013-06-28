@@ -2496,7 +2496,7 @@ FirebugReps.ErrorMessage = domplate(Firebug.Rep,
 
     hasStackTrace: function(error)
     {
-        return error && (error.trace || error.missingTraceBecauseNoDebugger);
+        return error && error.trace;
     },
 
     hasBreakSwitch: function(error)
@@ -2665,7 +2665,7 @@ FirebugReps.ErrorMessage = domplate(Firebug.Rep,
                     // XXX: Localize this
                     var msg = (hasScriptPanel ?
                         "The Script panel was disabled when this error was generated." :
-                        "The Script panel must be enabled for get stack traces. <a>Enable Script panel.</a>");
+                        "The Script panel must be enabled to get stack traces. <a>Enable Script panel.</a>");
                     FirebugReps.Description.render(msg, traceBox, enableScriptPanel);
                 }
 
