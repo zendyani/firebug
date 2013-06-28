@@ -94,9 +94,7 @@ function createFirebugConsole(context, win)
 
     console.trace = function firebugDebuggerTracer()
     {
-        var trace = null;
-        if (Firebug.Debugger.isAlwaysEnabled())
-            trace = getJSDUserStack();
+        var trace = getJSDUserStack();
         if (!trace)
             trace = getComponentsUserStack();
 
