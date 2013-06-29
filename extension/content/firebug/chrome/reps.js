@@ -2446,7 +2446,8 @@ FirebugReps.ErrorMessage = domplate(Firebug.Rep,
             _repObject: "$object",
             _stackTrace: "$object|getLastErrorStackTrace",
             onclick: "$onToggleError"},
-            DIV({"class": "errorTitle focusRow subLogRow", role: "listitem"},
+            DIV({"class": "errorTitle focusRow subLogRow", role: "listitem",
+                title: "$object|getTooltip", $hasTooltip: "$object|getTooltip"},
                 SPAN({"class": "errorMessage"},
                     "$object.message"
                 )
@@ -2454,7 +2455,7 @@ FirebugReps.ErrorMessage = domplate(Firebug.Rep,
             DIV({"class": "errorTrace", role: "presentation"}),
             TAG("$object|getObjectsTag", {object: "$object.objects"}),
             DIV({"class": "errorSourceBox errorSource-$object|getSourceType focusRow subLogRow",
-                role : "listitem"},
+                role: "listitem"},
                 TABLE({cellspacing: 0, cellpadding: 0},
                     TBODY(
                         TR(
@@ -2623,6 +2624,12 @@ FirebugReps.ErrorMessage = domplate(Firebug.Rep,
             return "show";
     },
 
+    getTooltip: function(error)
+    {
+        if (error.missingTraceBecauseNoDebugger)
+            return Locale.$STR("console.tip.ErrorWithoutDebugger");
+    },
+
     onToggleError: function(event)
     {
         var target = event.currentTarget;
@@ -2662,10 +2669,9 @@ FirebugReps.ErrorMessage = domplate(Firebug.Rep,
                         var scriptPanelType = Firebug.getPanelType("script");
                         PanelActivation.enablePanel(scriptPanelType);
                     };
-                    // XXX: Localize this
                     var msg = (hasScriptPanel ?
-                        "The Script panel was disabled when this error was generated." :
-                        "The Script panel must be enabled to get stack traces. <a>Enable Script panel.</a>");
+                        Locale.$STR("console.DebuggerWasDisabledForError") :
+                        Locale.$STR("console.ScriptPanelMustBeEnabledForTraces"));
                     FirebugReps.Description.render(msg, traceBox, enableScriptPanel);
                 }
 
