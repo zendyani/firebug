@@ -50,6 +50,7 @@ var contentLoad = NetProgress.prototype.contentLoad;
  * for the user.
  */
 Firebug.NetMonitor = Obj.extend(Firebug.ActivableModule,
+/** @lends Firebug.NetMonitor */
 {
     dispatchName: "netMonitor",
     maxQueueRequests: 500,
@@ -469,7 +470,7 @@ var NetHttpObserver =
             {
                 Firebug.NetMonitor.contexts[tabId] = createNetProgress(null);
 
-                // OK, we definitelly want to watch this page load, temp context is created
+                // OK, we definitely want to watch this page load, temporary context is created
                 // so, make sure the activity-observer is registered and we have detailed
                 // timing info for this first document request.
                 NetHttpActivityObserver.registerObserver();

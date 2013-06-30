@@ -1,8 +1,23 @@
 function runTest()
 {
-    FBTest.openNewTab(basePath + "lib/textSearch.htm", function(win)
+    FBTest.openNewTab(basePath + "lib/search/textSearch.htm", function(win)
     {
         var root = win.document.getElementById("content");
+        FBTest.progress("Document ready state: " + win.document.readyState);
+        FBTest.progress("Location: " + win.location);
+
+        var documentElement = win.document.documentElement;
+        var innerHTML = documentElement ? documentElement.innerHTML :
+            "document element not available";
+
+        FBTest.progress("Document innerHTML: " + innerHTML);
+
+        if (!FBTest.ok(root, "The 'content' element must exist."))
+        {
+            FBTest.testDone();
+            return;
+        }
+
         var child = win.document.getElementById("child");
 
         function compareFind(node, offset, result)

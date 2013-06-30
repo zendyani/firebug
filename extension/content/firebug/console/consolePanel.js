@@ -12,22 +12,16 @@ define([
     "firebug/lib/search",
     "firebug/chrome/menu",
     "firebug/lib/options",
-    "firebug/lib/wrapper",
-    "firebug/lib/xpcom",
-    "firebug/console/profiler",
+    "firebug/console/commands/profiler",
     "firebug/chrome/searchBox"
 ],
-function(Obj, Firebug, Domplate, FirebugReps, Locale, Events, Css, Dom, Search, Menu, Options,
-    Wrapper, Xpcom) {
+function(Obj, Firebug, Domplate, FirebugReps, Locale, Events, Css, Dom, Search, Menu, Options) {
 
 with (Domplate) {
 
 // ********************************************************************************************* //
 // Constants
 
-var versionChecker = Xpcom.CCSV("@mozilla.org/xpcom/version-comparator;1", "nsIVersionComparator");
-var appInfo = Xpcom.CCSV("@mozilla.org/xre/app-info;1", "nsIXULAppInfo");
-var firefox15AndHigher = versionChecker.compare(appInfo.version, "15") >= 0;
 var reAllowedCss = /^(-moz-)?(background|border|color|font|line|margin|padding|text)/;
 
 const Cc = Components.classes;
@@ -96,6 +90,21 @@ Firebug.ConsolePanel.prototype = Obj.extend(Firebug.ActivablePanel,
 
         if (!this.persistedContent && Firebug.Console.isAlwaysEnabled())
             this.insertLogLimit(this.context);
+
+        // Initialize filter button tooltips
+        var doc = this.context.chrome.window.document;
+        var filterButtons = doc.getElementsByClassName("fbConsoleFilter");
+        for (var i=0, len=filterButtons.length; i<len; ++i)
+        {
+            if (filterButtons[i].id != "fbConsoleFilter-all")
+            {
+                filterButtons[i].tooltipText = Locale.$STRF("firebug.labelWithShortcut",
+                    [filterButtons[i].tooltipText, Locale.$STR("tooltip.multipleFiltersHint")]);
+            }
+        }
+
+        // Listen for set filters, so the panel is properly updated when needed
+        Firebug.Console.addListener(this);
     },
 
     destroy: function(state)
@@ -118,6 +127,7 @@ Firebug.ConsolePanel.prototype = Obj.extend(Firebug.ActivablePanel,
             FBTrace.sysout("console.destroy; wasScrolledToBottom: " +
                 this.wasScrolledToBottom + ", " + this.context.getName());
 
+        Firebug.Console.removeListener(this);
         Firebug.ActivablePanel.destroy.apply(this, arguments);  // must be called last
     },
 
@@ -151,9 +161,12 @@ Firebug.ConsolePanel.prototype = Obj.extend(Firebug.ActivablePanel,
                 " " + this.context.getName(), state);
 
         this.showCommandLine(true);
+        Firebug.CommandLine.focus(this.context);
+
         this.showToolbarButtons("fbConsoleButtons", true);
 
-        this.setFilter(Options.get("consoleFilterTypes"));
+        if (!this.filterTypes)
+            this.setFilter(Options.get("consoleFilterTypes").split(" "));
 
         Firebug.chrome.setGlobalAttribute("cmd_firebug_togglePersistConsole", "checked",
             this.persistContent);
@@ -211,18 +224,6 @@ Firebug.ConsolePanel.prototype = Obj.extend(Firebug.ActivablePanel,
         if (FBTrace.DBG_CONSOLE)
             FBTrace.sysout("console.hide; wasScrolledToBottom: " +
                 this.wasScrolledToBottom + ", " + this.context.getName());
-    },
-
-    updateOption: function(name, value)
-    {
-        if (name == "consoleFilterTypes")
-        {
-            Firebug.Console.syncFilterButtons(Firebug.chrome);
-            Firebug.connection.eachContext(function syncFilters(context)
-            {
-                Firebug.Console.onToggleFilter(context, value);
-            });
-        }
     },
 
     shouldBreakOnNext: function()
@@ -319,23 +320,17 @@ Firebug.ConsolePanel.prototype = Obj.extend(Firebug.ActivablePanel,
 
     setFilter: function(filterTypes)
     {
-        var panelNode = this.panelNode;
+        this.filterTypes = filterTypes;
 
-        Events.dispatch(this.fbListeners, "onFilterSet", [logTypes]);
+        var panelNode = this.panelNode;
+        Events.dispatch(this.fbListeners, "onFiltersSet", [logTypes]);
 
         for (var type in logTypes)
         {
-            // Different types of errors and warnings are combined for filtering
-            if (filterTypes == "all" || filterTypes == "" || filterTypes.indexOf(type) != -1 ||
-                (filterTypes.indexOf("error") != -1 && (type == "error" || type == "errorMessage")) ||
-                (filterTypes.indexOf("warning") != -1 && (type == "warn" || type == "warningMessage")))
-            {
-                Css.removeClass(panelNode, "hideType-" + type);
-            }
-            else
-            {
+            if (filterTypes.join(" ") != "all" && filterTypes.indexOf(type) == -1)
                 Css.setClass(panelNode, "hideType-" + type);
-            }
+            else
+                Css.removeClass(panelNode, "hideType-" + type);
         }
     },
 
@@ -390,6 +385,15 @@ Firebug.ConsolePanel.prototype = Obj.extend(Firebug.ActivablePanel,
     breakOnNext: function(breaking)
     {
         Options.set("breakOnErrors", breaking);
+    },
+
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+    // Console Listeners
+
+    onFiltersSet: function(filterTypes)
+    {
+        this.setFilter(filterTypes);
+        Firebug.Search.update(this.context);
     },
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -543,27 +547,6 @@ Firebug.ConsolePanel.prototype = Obj.extend(Firebug.ActivablePanel,
 
     appendObject: function(object, row, rep)
     {
-        // Issue 5712:  Firefox crashes when trying to log XMLHTTPRequest to console
-        // xxxHonza: should be removed as soon as Firefox 16 is the minimum version.
-        if (!firefox15AndHigher)
-        {
-            if (typeof(object) == "object")
-            {
-                try
-                {
-                    // xxxHonza: could we log directly the unwrapped object?
-                    var unwrapped = Wrapper.unwrapObject(object);
-                    if (unwrapped.constructor.name == "XMLHttpRequest") 
-                        object = object + "";
-                }
-                catch (e)
-                {
-                    if (FBTrace.DBG_ERRORS)
-                        FBTrace.sysout("consolePanel.appendObject; EXCEPTION " + e, e);
-                }
-            }
-        }
-
         if (!rep)
             rep = Firebug.getRep(object, this.context);
 

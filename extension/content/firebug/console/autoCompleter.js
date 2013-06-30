@@ -387,6 +387,7 @@ Firebug.JSAutoCompleter = function(textBox, completionBox, options)
             "toFixed": "toString",
             "watch": "toString",
             "pattern": "parentNode",
+            "getSelection": "getEventListeners",
             "inspect": "include",
             "home": "history"
         };
@@ -2033,11 +2034,11 @@ function evalPropChainStep(step, tempExpr, evalChain, out, context)
             ++step;
         }
 
-        var func = (funcCommand !== null), command = (func ? funcCommand : tempExpr.command);
+        var isFunc = (funcCommand !== null), command = (isFunc ? funcCommand : tempExpr.command);
         Firebug.CommandLine.evaluate(command, context, context.thisValue, null,
             function found(result, context)
             {
-                if (func)
+                if (isFunc)
                 {
                     if (type === LinkType.CALL)
                     {
@@ -2110,10 +2111,14 @@ function evalPropChainStep(step, tempExpr, evalChain, out, context)
                         {
                             var rest = result.substr(newPos + 11),
                                 epos = rest.search(/[^a-zA-Z0-9_$.]/);
-                            if (epos !== -1)
+                            if (epos !== -1 && /[; \t\n(}]/.test(rest.charAt(epos)))
                             {
                                 rest = rest.substring(0, epos);
-                                tempExpr.command = rest + ".prototype";
+                                var func = tempExpr.command, expr = rest + ".prototype";
+                                tempExpr.command = "(function() { " +
+                                    "try { return " + func + ".%" + expr + "; } " +
+                                    "catch(e) { return " + expr + "; } " +
+                                "})()";
                                 evalPropChainStep(step+1, tempExpr, evalChain, out, context);
                                 return;
                             }
@@ -2194,11 +2199,16 @@ function evalPropChain(out, preExpr, origExpr, context)
             else if (ch === "(")
             {
                 // Function call. Save the function name and the arguments if
-                // they are safe to evaluate.
+                // they are safe to evaluate. Currently literals and single
+                // variables not occurring previously on the command line are
+                // treated as safe.
                 var endCont = matchingBracket(preExpr, linkStart);
                 var cont = preExpr.substring(linkStart+1, endCont), origCont = null;
-                if (reLiteralExpr.test(cont))
+                if (reLiteralExpr.test(cont) || (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(cont) &&
+                    preExpr.lastIndexOf(cont, linkStart) === -1))
+                {
                     origCont = origExpr.substring(linkStart+1, endCont);
+                }
                 linkStart = endCont + 1;
                 evalChain.push({
                     "type": LinkType.CALL,
@@ -2358,7 +2368,7 @@ function autoCompleteEval(context, preExpr, spreExpr, preParsed, spreParsed, opt
         if (!spreExpr && options.includeCommandLineAPI && !context.stopped)
         {
             var global = Wrapper.unwrapObject(out.window);
-            CommandLineExposed.completionList.forEach(function(name)
+            CommandLineExposed.getAutoCompletionList().forEach(function(name)
             {
                 if (!(name in global))
                     out.completions.push({type: CompletionType.API, name: name});

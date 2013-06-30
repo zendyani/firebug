@@ -2,15 +2,27 @@
 
 define([
     "firebug/cookies/cookie",
+    "firebug/lib/wrapper",
     "firebug/lib/string"
 ],
-function(Cookie, Str) {
+function(Cookie, Wrapper, Str) {
 
 // ********************************************************************************************* //
-// Menu Utils
+// Constants
+
+var Cu = Components.utils;
+
+// ********************************************************************************************* //
+// CookieUtils Implementation
 
 var CookieUtils = 
 {
+    isSessionCookie: function(cookie)
+    {
+        // maxAge is string value, "0" will not register as session.
+        return (!cookie.expires && !cookie.maxAge)
+    },
+
     getCookieId: function(cookie)
     {
         return cookie.host + cookie.path + cookie.name;
@@ -44,7 +56,7 @@ var CookieUtils =
         }
         catch (exc) { }
 
-        var c = {
+        return {
             name        : cookie.name,
             value       : value,
             isDomain    : cookie.isDomain,
@@ -52,12 +64,11 @@ var CookieUtils =
             path        : cookie.path,
             isSecure    : cookie.isSecure,
             expires     : cookie.expires,
+            maxAge      : cookie.maxAge,
             isHttpOnly  : cookie.isHttpOnly,
             rawValue    : rawValue,
             rawCookie   : cookie,
         };
-
-        return c;
     },
 
     parseFromString: function(string)
@@ -85,6 +96,11 @@ var CookieUtils =
 
                     case "secure":
                         cookie.isSecure = true;
+                        break;
+
+                    case "max-age":
+                        //Remove dash from variable name
+                        cookie.maxAge = option[1];
                         break;
 
                     case "expires":
@@ -136,6 +152,15 @@ var CookieUtils =
         }
 
         return cookies;
+    },
+
+    getRealObject: function(cookie, context)
+    {
+        cookie = this.makeCookieObject(cookie);
+        delete cookie.rawCookie;
+
+        var global = context.getCurrentGlobal();
+        return Wrapper.cloneIntoContentScope(global, cookie);
     }
 };
 

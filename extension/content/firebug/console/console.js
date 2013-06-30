@@ -9,12 +9,12 @@ define([
     "firebug/lib/search",
     "firebug/lib/xml",
     "firebug/lib/options",
-    "firebug/console/profiler",
+    "firebug/console/commands/profiler",
     "firebug/chrome/searchBox",
     "firebug/console/consolePanel",
     "firebug/console/commandEditor",
     "firebug/console/functionMonitor",
-    "firebug/console/eventMonitor",
+    "firebug/console/commands/eventMonitor",
     "firebug/console/performanceTiming",
 ],
 function(Obj, Firebug, Firefox, Events, Win, Search, Xml, Options) {
@@ -282,36 +282,59 @@ Firebug.Console = Obj.extend(ActivableConsole,
             this.setStatus();
     },
 
-    onToggleFilter: function(context, filterType)
+    onToggleFilter: function(event, context, filterType)
     {
         if (!context)
             context = Firebug.currentContext;
 
-        Options.set("consoleFilterTypes", filterType);
-
-        var panel = this.getPanel(context, true);
-        if (panel)
+        var filterTypes = [];
+        if (Events.isControl(event) && filterType != "all")
         {
-            panel.setFilter(Options.get("consoleFilterTypes"));
-            Firebug.Search.update(context);
+            filterTypes = Options.get("consoleFilterTypes").split(" ");
+            var filterTypeIndex = filterTypes.indexOf(filterType);
+            if (filterTypeIndex == -1)
+                filterTypes.push(filterType);
+            else
+                filterTypes.splice(filterTypeIndex, 1);
         }
+        else
+        {
+            filterTypes.push(filterType);
+        }
+
+        // Remove "all" filter in case several filters are selected
+        if (filterTypes.length > 1)
+        {
+            var allIndex = filterTypes.indexOf("all");
+            if (allIndex != -1)
+                filterTypes.splice(allIndex, 1);
+        }
+
+        // If no filter categories are selected, use the default
+        if (filterTypes.length == 0)
+            filterTypes = Options.getDefault("consoleFilterTypes").split(" ");
+
+        Options.set("consoleFilterTypes", filterTypes.join(" "));
+
+        this.syncFilterButtons(Firebug.chrome);
+
+        Events.dispatch(Firebug.Console.fbListeners, "onFiltersSet", [filterTypes]);
     },
 
     syncFilterButtons: function(chrome)
     {
-        if (Options.get("consoleFilterTypes") == "")
+        var filterTypes = new Set();
+        Options.get("consoleFilterTypes").split(" ").forEach(function(element)
         {
-            var button = chrome.$("fbConsoleFilter-all");
-            button.checked = true;
-        }
-        else
+            filterTypes.add(element);
+        });
+        var doc = chrome.window.document;
+        var buttons = doc.getElementsByClassName("fbConsoleFilter");
+
+        for (var i=0, len=buttons.length; i<len; ++i)
         {
-            var filterTypes = Options.get("consoleFilterTypes").split(" ");
-            for (var type = 0; type < filterTypes.length; type++)
-            {
-                var button = chrome.$("fbConsoleFilter-" + filterTypes[type]);
-                button.checked = true;
-            }
+            var filterType = buttons[i].id.substr(buttons[i].id.search("-") + 1);
+            buttons[i].checked = filterTypes.has(filterType);
         }
     },
 

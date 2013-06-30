@@ -13,22 +13,20 @@ define([
     "firebug/lib/dom",
     "firebug/chrome/firefox",
     "firebug/chrome/window",
-    "firebug/chrome/menu",
     "firebug/lib/system",
     "firebug/lib/string",
     "firebug/lib/persist",
-    "firebug/js/sourceLink",
     "firebug/console/console",
     "firebug/console/commandLineExposed",
     "firebug/console/closureInspector",
     "firebug/console/commandLineAPI",
     "firebug/console/autoCompleter",
     "firebug/console/commandHistory",
-    "firebug/console/commandLineHelp",
-    "firebug/console/commandLineInclude",
+    "firebug/console/commands/commandLineHelp",
+    "firebug/console/commands/commandLineInclude",
 ],
-function(Obj, Firebug, FirebugReps, Options, Locale, Events, Url, Dom, Firefox, Win, Menu, System,
-    Str, Persist, SourceLink, Console, CommandLineExposed, ClosureInspector, CommandLineAPI) {
+function(Obj, Firebug, FirebugReps, Options, Locale, Events, Url, Dom, Firefox, Win, System, Str,
+    Persist, Console, CommandLineExposed, ClosureInspector, CommandLineAPI) {
 
 "use strict";
 
@@ -37,7 +35,7 @@ function(Obj, Firebug, FirebugReps, Options, Locale, Events, Url, Dom, Firefox, 
 
 const Cc = Components.classes;
 
-const commandPrefix = ">>>";
+const commandPrefix = ">>> ";
 
 // ********************************************************************************************* //
 // Command Line
@@ -254,12 +252,12 @@ Firebug.CommandLine = Obj.extend(Firebug.Module,
         if (!Options.get("commandEditor") || context.panelName !== "console")
         {
             this.clear(context);
-            Firebug.Console.log(commandPrefix + " " + expr, context, "command", FirebugReps.Text);
+            Firebug.Console.log(commandPrefix + expr, context, "command", FirebugReps.Text);
         }
         else
         {
             var shortExpr = Str.cropString(Str.stripNewLines(expr), 100);
-            Firebug.Console.log(commandPrefix + " " + shortExpr, context, "command",
+            Firebug.Console.log(commandPrefix + shortExpr, context, "command",
                 FirebugReps.Text);
         }
 
@@ -279,16 +277,32 @@ Firebug.CommandLine = Obj.extend(Firebug.Module,
             noscript.setJSEnabled(noScriptURI, true);
 
         // Allow the use of plain "help"
+        // xxxHonza: this is a hack, FIX ME
         if (expr === "help")
             expr = "help()";
 
-        var goodOrBad = Obj.bind(Firebug.Console.log, Firebug.Console);
-        this.evaluate(expr, context, null, null, goodOrBad, goodOrBad);
+        var self = this;
+        var logResult = Firebug.Console.log.bind(Firebug.Console);
+
+        function successHandler(result, context)
+        {
+            self.dispatch("expressionEvaluated", [context, expr, result, true]);
+            logResult.apply(this, arguments);
+        }
+
+        function exceptionHandler(err, context)
+        {
+            self.dispatch("expressionEvaluated", [context, expr, err, false]);
+            logResult.apply(this, arguments);
+        }
+
+        // Finally, let's evaluate the use expression!
+        this.evaluate(expr, context, null, null, successHandler, exceptionHandler);
 
         if (noscript && noScriptURI)
             noscript.setJSEnabled(noScriptURI, false);
 
-        var consolePanel = Firebug.currentContext.panelMap.console;
+        var consolePanel = context.getPanel("console");
         if (consolePanel)
             Dom.scrollToBottom(consolePanel.panelNode);
     },
@@ -347,7 +361,9 @@ Firebug.CommandLine = Obj.extend(Firebug.Module,
             // We are already on the console, if the command line has also
             // the focus, toggle back. But only if the UI has been already
             // opened.
-            if (commandLine.getAttribute("focused") !== "true")
+            if (Options.get("commandEditor"))
+                commandLine.focus();
+            else if (commandLine.getAttribute("focused") !== "true")
                 setTimeout(function() { commandLine.select(); });
         }
     },
@@ -462,7 +478,6 @@ Firebug.CommandLine = Obj.extend(Firebug.Module,
     initialize: function()
     {
         Firebug.Module.initialize.apply(this, arguments);
-        Firebug.registerUIListener(this);
 
         this.setAutoCompleter();
         this.commandHistory = new Firebug.CommandHistory();
@@ -528,8 +543,6 @@ Firebug.CommandLine = Obj.extend(Firebug.Module,
         Events.removeEventListener(commandLine, "keyup", this.onCommandLineKeyUp, true);
         Events.removeEventListener(commandLine, "keydown", this.onCommandLineKeyDown, true);
         Events.removeEventListener(commandLine, "keypress", this.onCommandLineKeyPress, true);
-
-        Firebug.unregisterUIListener(this);
     },
 
     destroyContext: function(context, persistedState)
@@ -691,7 +704,8 @@ Firebug.CommandLine = Obj.extend(Firebug.Module,
 
     onPanelDisable: function(panelName)
     {
-        if (panelName !== "console")  // we don't care about other panels
+        // We don't care about other panels.
+        if (panelName !== "console")
             return;
 
         Dom.collapse(Firebug.chrome.$("fbCommandBox"), true);
@@ -699,73 +713,11 @@ Firebug.CommandLine = Obj.extend(Firebug.Module,
         Dom.collapse(Firebug.chrome.$("fbSidePanelDeck"), true);
     },
 
-    onContextMenu: function(items, object, target, context, panel, popup)
-    {
-        if (typeof object === "boolean" || object === undefined || object === null)
-            return;
-
-        var rep = Firebug.getRep(object, context);
-        object = rep && rep.getRealObject(object, context);
-
-        if (!rep || !rep.inspectable || object instanceof SourceLink.SourceLink)
-            return;
-
-        var hasConsole = !!context.getPanel("console", true);
-
-        function useInCommandLine()
-        {
-            context.rememberedObject = object;
-
-            var panel = Firebug.chrome.getSelectedPanel();
-            if (!hasConsole)
-                Firebug.chrome.selectPanel("console");
-            else if (panel && panel.name != "console" && !Firebug.CommandLine.Popup.isVisible())
-                Firebug.CommandLine.Popup.toggle(context);
-
-            var commandLine = this.getCommandLine(context);
-
-            var valueLength = commandLine.value.length, ins = "$p";
-
-            commandLine.value += ins;
-            commandLine.focus();
-            commandLine.setSelectionRange(valueLength, valueLength + ins.length);
-
-            this.autoCompleter.hide();
-            this.update(context);
-        }
-
-        var item = {
-            label: "commandline.Use_in_Command_Line",
-            tooltiptext: "commandline.tip.Use_in_Command_Line",
-            id: "fbUseInCommandLine",
-            command: useInCommandLine.bind(this)
-        };
-
-        // Add the item before the first "Inspect in * Panel" option (or at the bottom
-        // together with a separator if there is none).
-        var before = Array.prototype.filter.call(popup.childNodes, function(node)
-        {
-            return Str.hasPrefix(node.id, "InspectIn");
-        })[0];
-
-        if (!before)
-            Menu.createMenuSeparator(popup);
-
-        Menu.createMenuItem(popup, item, before);
-    },
-
-    getAccessorVars: function(context)
-    {
-        return {
-            "$p": context.rememberedObject
-        };
-    },
-
     getCommandLine: function(context)
     {
         return (!this.isInOtherPanel(context) && Firebug.commandEditor) ?
-                this.getCommandEditor():
-                this.getSingleRowCommandLine();
+            this.getCommandEditor():
+            this.getSingleRowCommandLine();
     },
 
     isInOtherPanel: function(context)
@@ -778,8 +730,8 @@ Firebug.CommandLine = Obj.extend(Firebug.Module,
     getExpression: function(context)
     {
         return (!this.isInOtherPanel(context) && Firebug.commandEditor) ?
-                this.getCommandEditor().getExpression() :
-                this.getSingleRowCommandLine().value;
+            this.getCommandEditor().getExpression() :
+            this.getSingleRowCommandLine().value;
     },
 
     getCompletionBox: function()
