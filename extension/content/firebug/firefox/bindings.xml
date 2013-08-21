@@ -1846,14 +1846,13 @@
                 if (!optionsPopup || !searchBox)
                     return;
                 searchBox.focus();
-                if (optionsPopup.state == "open")
+                if (optionsPopup.state == "open" && this.value.length == 0)
                 {
-                    event.stopPropagation(); // prevent cmd popup toggle
                     optionsPopup.hidePopup();
                 }
                 else
                 {
-                    return;
+                    Firebug.Search.escape(Firebug.currentContext);
                 }
             }
             else if (event.keyCode ==  KeyEvent.DOM_VK_RETURN)

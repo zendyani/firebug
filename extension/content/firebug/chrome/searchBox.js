@@ -97,6 +97,16 @@ Firebug.Search = Obj.extend(Firebug.Module,
         searchBox.select();
     },
 
+    /**
+     * Manage click on escape button
+     */
+    escape: function(context)
+    {
+        var searchBox = Firebug.chrome.$("fbSearchBox");
+        searchBox.value = "";
+        searchBox.status = "";
+    },
+
     update: function(context, immediate, reverse)
     {
         var panel = Firebug.chrome.getSelectedPanel();
