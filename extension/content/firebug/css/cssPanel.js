@@ -1728,6 +1728,13 @@ Firebug.CSSStyleSheetPanel.prototype = Obj.extend(Firebug.Panel,
             if (!cssValue)
                 return false;
 
+            if (cssValue.value === "currentcolor")
+            {
+                cssValue.value = this.getCurrentColor();
+                if (cssValue.value === "")
+                    return false;
+            }
+
             if (cssValue.value == this.infoTipValue)
                 return true;
 
@@ -1771,6 +1778,11 @@ Firebug.CSSStyleSheetPanel.prototype = Obj.extend(Firebug.Panel,
 
             return false;
         }
+    },
+
+    getCurrentColor: function()
+    {
+        return "";
     },
 
     getEditor: function(target, value)
@@ -2402,7 +2414,23 @@ CSSEditor.prototype = domplate(Firebug.InlineEditor.prototype,
         else if (Css.hasClass(this.target, "cssPropName"))
         {
             var nodeType = Xml.getElementSimpleType(Firebug.getRepObject(this.target));
-            return Css.getCSSPropertyNames(nodeType);
+            var ret = Css.getCSSPropertyNames(nodeType);
+
+            if (!cycle && expr)
+            {
+                // Make some good default suggestions.
+                var list = ["color", "clear", "display", "float", "overflow"];
+                for (var i = 0; i < list.length; ++i)
+                {
+                    if (Str.hasPrefix(list[i], expr) && ret.indexOf(list[i]) !== -1)
+                    {
+                        out.suggestion = list[i];
+                        break;
+                    }
+                }
+            }
+
+            return ret;
         }
         else if (Dom.getAncestorByClass(this.target, "cssDocumentRule") &&
                 !Css.hasClass(this.target, "cssPropValue"))
@@ -3117,9 +3145,7 @@ function parsePriority(value)
 
 function formatColor(color)
 {
-    var colorDisplay = Options.get("colorDisplay");
-
-    switch (colorDisplay)
+    switch (Options.get("colorDisplay"))
     {
         case "hex":
             return Css.rgbToHex(color);
@@ -3131,7 +3157,7 @@ function formatColor(color)
             return Css.colorNameToRGB(color);
 
         default:
-            return value;
+            return color;
     }
 }
 
