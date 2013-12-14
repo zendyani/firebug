@@ -498,7 +498,7 @@
                                 <toolbarbutton id="fbToggleCommandEditor"
                                     tooltiptext="console.option.Show_Command_Line"
                                     class="toolbarbutton-iconic fbInternational"
-                                    oncommand="Firebug.toggleCommandLine(false)"/>
+                                    oncommand="Firebug.CommandLine.toggleCommandEditor(false)"/>
                             </hbox>
                         </vbox>
                     </deck>
@@ -553,7 +553,7 @@
             <!-- Toggle into multi-line command line -->
             <toolbarbutton id="fbToggleCommandLine" tooltiptext="console.option.Show_Command_Editor"
                 class="toolbarbutton-iconic fbInternational"
-                oncommand="Firebug.toggleCommandLine(true)"/>
+                oncommand="Firebug.CommandLine.toggleCommandEditor(true)"/>
         </hbox>
 
     </vbox>
