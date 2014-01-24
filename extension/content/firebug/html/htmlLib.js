@@ -96,7 +96,7 @@ var HTMLLib =
                 ++matchCount;
 
                 var node = match.node;
-                var nodeBox = this.openToNode(node, match.isValue);
+                var nodeBox = this.openToNode(node, match);
 
                 this.selectMatched(nodeBox, node, match, reverse);
             }
@@ -143,12 +143,14 @@ var HTMLLib =
             function walkNode() { return reverse ? walker.previousNode() : walker.nextNode(); }
 
             var node;
-            while (node = walkNode())
+            var parentNode;
+            while (parentNode = walkNode())
             {
+                node = parentNode.node || parentNode;
                 if (node.nodeType == Node.TEXT_NODE && HTMLLib.isSourceElement(node.parentNode))
                     continue;
 
-                var m = this.checkNode(node, reverse, caseSensitive);
+                var m = this.checkNode(parentNode, reverse, caseSensitive);
                 if (m)
                     return m;
             }
@@ -190,8 +192,9 @@ var HTMLLib =
          *
          * @private
          */
-        this.checkNode = function(node, reverse, caseSensitive, firstStep)
+        this.checkNode = function(parentNode, reverse, caseSensitive, firstStep)
         {
+            node = parentNode.node || parentNode;
             if (nodeSet && nodeSet.has(node))
             {
                 // If a selector matches the node, that takes priority.
@@ -235,7 +238,8 @@ var HTMLLib =
                     return {
                         node: node,
                         isValue: checkOrder[i].isValue,
-                        match: m
+                        match: m,
+                        ownerElement: parentNode.ownerElement
                     };
                 }
             }
@@ -246,7 +250,7 @@ var HTMLLib =
          *
          * @private
          */
-        this.openToNode = function(node, isValue)
+        this.openToNode = function(node, match)
         {
             if (node.nodeType == Node.ELEMENT_NODE)
             {
@@ -255,11 +259,11 @@ var HTMLLib =
             }
             else if (node.nodeType == Node.ATTRIBUTE_NODE)
             {
-                var nodeBox = ioBox.openToObject(node.ownerElement);
+                var nodeBox = ioBox.openToObject(match.ownerElement);
                 if (nodeBox)
                 {
                     var attrNodeBox = HTMLLib.findNodeAttrBox(nodeBox, node.name);
-                    return Dom.getChildByClass(attrNodeBox, isValue ? "nodeValue" : "nodeName");
+                    return Dom.getChildByClass(attrNodeBox, match.isValue ? "nodeValue" : "nodeName");
                 }
             }
             else if (node.nodeType == Node.TEXT_NODE)
@@ -526,7 +530,13 @@ var HTMLLib =
          */
         this.currentNode = function()
         {
-            return !attrIndex ? currentNode : currentNode.attributes[attrIndex-1];
+            if (attrIndex)
+                return {
+                    ownerElement: currentNode,
+                    node: currentNode.attributes[attrIndex-1]
+                }
+            else
+               return currentNode;
         };
 
         /**
