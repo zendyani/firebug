@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Issue 7060: Code in Command Line disappears when a Firefox tab is closed</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <link href="../../_common/testcase.css" type="text/css" rel="stylesheet"/>
+    </head>
+    <body>
+        <header>
+            <h1><a href="http://code.google.com/p/fbug/issues/detail?id=7060">Issue 7060</a>: Code in Command Line disappears when a Firefox tab is closed</h1>
+        </header>
+        <div>
+            <section id="description">
+                <h3>Steps to reproduce</h3>
+                <ol>
+                    <li>enable and open console</li>
+                    <li>write console.log("hello"); on command line or command editor it's the same result</li>
+                    <li>open a new tab on firefox</li>
+                    <li>comeback on the tab with console code</li>
+                    <li>close the newest tab</li>
+                </ol>
+                <h3>Expected result</h3>
+                <ul>
+                    <li>console.log gone with the new tab closing</li>
+                </ul>
+            </section>
+            <footer>
+                &lt;Abdeldjalil Belakhdar&gt;, &lt;zendyani@gmail.com&gt;
+            </footer>
+        </div>
+    </body>
+</html>
